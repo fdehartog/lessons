@@ -203,8 +203,8 @@ export default function LesoverzichtPage() {
                 <Pill icon="▶" label={`${course?.video_count ?? 10} video's`} sub="helder uitgelegd" color="#4A9EFF" bg="rgba(74,158,255,0.12)" />
               </div>
             </div>
-            <div style={{ position: 'relative', height: 224, marginTop: -20, marginRight: -24, marginLeft: -400, zIndex: 0 }}>
-              <img src="/illustrations/hero.png" alt="Hero" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
+            <div style={{ position: 'relative', height: 320, marginTop: -20, marginRight: -24, marginLeft: -400, zIndex: 0 }}>
+              <img src="/illustrations/hero.png" alt="Hero" style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center center' }} />
               {/* Fade all four edges into the page background */}
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #0F1335 0%, transparent 25%)' }} />
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0F1335 0%, transparent 30%)' }} />
