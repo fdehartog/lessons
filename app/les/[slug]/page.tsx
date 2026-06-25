@@ -106,7 +106,7 @@ export default function LesDetailPage() {
       setLessonExperts(expertsData ?? [])
       setCourse(courseData)
       setCompletedCount(progressData?.length ?? 0)
-      setTotalCount(totalData ?? 10)
+      setTotalCount(typeof totalData === 'number' ? totalData : 10)
       setLoading(false)
     }
     load()
