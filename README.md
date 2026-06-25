@@ -1,3 +1,3 @@
-# test-project
+# Lessons
 
-This is a test project for Vraag Het Leiden - Zin of Onzin.
+This is the place where the lessons live for Vraag Het Leiden - Zin of Onzin.
