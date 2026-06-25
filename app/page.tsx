@@ -183,8 +183,16 @@ export default function LesoverzichtPage() {
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {/* Hero */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 520px', gap: 0, marginBottom: 24, alignItems: 'center', position: 'relative' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
+          <div style={{ position: 'relative', marginBottom: 24, marginRight: -24 }}>
+            {/* Hero image — absolutely fills right half, bleeds to page edge */}
+            <div style={{ position: 'absolute', top: -20, right: 0, bottom: 0, width: '60%', zIndex: 0, pointerEvents: 'none' }}>
+              <img src="/illustrations/hero.png" alt="Hero" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'left center' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #0F1335 0%, transparent 30%)' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0F1335 0%, transparent 35%)' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, #0F1335 0%, transparent 25%)' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to left, #0F1335 0%, transparent 10%)' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', zIndex: 1, paddingRight: 24 }}>
               <h1
                 style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', fontWeight: 900, fontSize: 48, lineHeight: 1.1, letterSpacing: '-0.02em', marginBottom: 12 }}
                 dangerouslySetInnerHTML={{
@@ -202,14 +210,6 @@ export default function LesoverzichtPage() {
                 <Pill icon="🗳" label={`${course?.vote_rounds ?? 10} stemrondes`} sub="jouw mening telt" color="#6BCF7F" bg="rgba(107,207,127,0.12)" />
                 <Pill icon="▶" label={`${course?.video_count ?? 10} video's`} sub="helder uitgelegd" color="#4A9EFF" bg="rgba(74,158,255,0.12)" />
               </div>
-            </div>
-            <div style={{ position: 'relative', height: 320, marginTop: -20, marginRight: -24, marginLeft: -400, zIndex: 0 }}>
-              <img src="/illustrations/hero.png" alt="Hero" style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center center' }} />
-              {/* Fade all four edges into the page background */}
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #0F1335 0%, transparent 25%)' }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0F1335 0%, transparent 30%)' }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, #0F1335 0%, transparent 20%)' }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to left, #0F1335 0%, transparent 15%)' }} />
             </div>
           </div>
 
