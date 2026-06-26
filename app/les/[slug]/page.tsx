@@ -351,11 +351,11 @@ export default function LesDetailPage() {
                   </div>
                   <div style={{ position: 'relative', paddingLeft: 16 }}>
                     {/* Vertical line */}
-                    <div style={{ position: 'absolute', left: 23, top: 12, height: 80, width: 2, background: 'linear-gradient(180deg, #B594F7, #FFB347, #6BCF7F)', borderRadius: 99 }} />
+                    <div style={{ position: 'absolute', left: 23, top: 12, bottom: 20, width: 2, background: 'linear-gradient(180deg, #B594F7, #FFB347, #6BCF7F)', borderRadius: 99, zIndex: 0 }} />
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                       {steps.map((step, i) => (
                         <div key={step.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                          <div style={{ width: 24, height: 24, borderRadius: '50%', background: STEP_COLORS[i] ?? '#B594F7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Nunito', fontWeight: 900, fontSize: 12, color: '#fff', flexShrink: 0, marginLeft: -4 }}>
+                          <div style={{ width: 24, height: 24, borderRadius: '50%', background: STEP_COLORS[i] ?? '#B594F7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Nunito', fontWeight: 900, fontSize: 12, color: '#fff', flexShrink: 0, marginLeft: -4, position: 'relative', zIndex: 1 }}>
                             {step.position}
                           </div>
                           <div>
