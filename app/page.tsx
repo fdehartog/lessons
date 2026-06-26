@@ -29,12 +29,13 @@ type Course = {
 }
 
 const NAV_ITEMS = [
-  { label: 'Overzicht', icon: '⊞', active: true },
-  { label: 'Voortgang', icon: '◎', active: false },
-  { label: 'Bibliotheek', icon: '☰', active: false },
-  { label: 'Reflectie', icon: '◇', active: false },
-  { label: 'Docenten', icon: '👤', active: false },
-  { label: 'Instellingen', icon: '⚙', active: false },
+  { label: 'Overzicht', icon: '⊞', active: true, href: '/' },
+  { label: 'Voortgang', icon: '◎', active: false, href: null },
+  { label: 'Wetenschappers', icon: '🔬', active: false, href: '/wetenschappers' },
+  { label: 'Bibliotheek', icon: '☰', active: false, href: null },
+  { label: 'Reflectie', icon: '◇', active: false, href: null },
+  { label: 'Docenten', icon: '👤', active: false, href: null },
+  { label: 'Instellingen', icon: '⚙', active: false, href: null },
 ]
 
 function toSlug(title: string) {
@@ -112,9 +113,10 @@ export default function LesoverzichtPage() {
           {NAV_ITEMS.map(item => (
             <button
               key={item.label}
+              onClick={() => item.href && router.push(item.href)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px',
-                borderRadius: 12, textAlign: 'left', cursor: 'pointer', border: 'none',
+                borderRadius: 12, textAlign: 'left', cursor: item.href ? 'pointer' : 'default', border: 'none',
                 background: item.active ? 'rgba(139,111,224,0.15)' : 'transparent',
                 color: item.active ? '#FFFFFF' : '#8B91B8',
                 fontWeight: item.active ? 700 : 500, fontSize: 15, fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',

@@ -44,12 +44,13 @@ const TONE_COLORS: Record<string, string> = {
 }
 
 const NAV_ITEMS = [
-  { label: 'Overzicht', icon: '⊞', active: false },
-  { label: 'Voortgang', icon: '◎', active: false },
-  { label: 'Bibliotheek', icon: '☰', active: false },
-  { label: 'Reflectie', icon: '◇', active: false },
-  { label: 'Docenten', icon: '👤', active: false },
-  { label: 'Instellingen', icon: '⚙', active: false },
+  { label: 'Overzicht', icon: '⊞', active: false, href: '/' },
+  { label: 'Voortgang', icon: '◎', active: false, href: null },
+  { label: 'Wetenschappers', icon: '🔬', active: false, href: '/wetenschappers' },
+  { label: 'Bibliotheek', icon: '☰', active: false, href: null },
+  { label: 'Reflectie', icon: '◇', active: false, href: null },
+  { label: 'Docenten', icon: '👤', active: false, href: null },
+  { label: 'Instellingen', icon: '⚙', active: false, href: null },
 ]
 
 export default function LesDetailPage() {
@@ -151,12 +152,12 @@ export default function LesDetailPage() {
           {NAV_ITEMS.map(item => (
             <button
               key={item.label}
-              onClick={() => item.label === 'Overzicht' && router.push('/')}
+              onClick={() => item.href && router.push(item.href)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px',
-                borderRadius: 12, textAlign: 'left', cursor: 'pointer', border: 'none',
-                background: 'transparent', color: '#8B91B8', fontWeight: 500, fontSize: 14,
-                fontFamily: 'Nunito', borderLeft: '3px solid transparent', transition: 'all 0.2s',
+                borderRadius: 12, textAlign: 'left', cursor: item.href ? 'pointer' : 'default', border: 'none',
+                background: 'transparent', color: '#8B91B8', fontWeight: 500, fontSize: 15,
+                fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', borderLeft: '3px solid transparent', transition: 'all 0.2s',
               }}
             >
               <span style={{ fontSize: 16 }}>{item.icon}</span>
