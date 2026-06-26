@@ -14,6 +14,16 @@ const NAV_ITEMS = [
 
 const WETENSCHAPPERS = [
   {
+    name: 'Bas Haring',
+    title: 'Filosoof & hoogleraar',
+    instelling: 'Universiteit Leiden',
+    omschrijving: 'Bas Haring is hoogleraar "Publiek begrip van wetenschap" aan de Universiteit Leiden. Hij schrijft boeken, maakt televisie en geeft lezingen over filosofie en wetenschap voor een breed publiek. Hij is bekend om zijn toegankelijke en speelse manier van uitleggen, waarbij hij complexe ideeën vertaalt naar herkenbare, alledaagse situaties.',
+    website: 'https://www.universiteitleiden.nl',
+    photo: '/illustrations/expert-bas-haring.png',
+    initials: 'BH',
+    color: '#FFB347',
+  },
+  {
     name: 'Alexander Pleijter',
     title: 'Journalist & onderzoeker',
     instelling: 'Hogeschool Windesheim',
@@ -21,7 +31,7 @@ const WETENSCHAPPERS = [
     website: 'https://www.windesheim.nl',
     photo: null,
     initials: 'AP',
-    color: '#FFB347',
+    color: '#5BC0EB',
   },
   {
     name: 'Ili Ma',
@@ -32,16 +42,6 @@ const WETENSCHAPPERS = [
     photo: null,
     initials: 'IM',
     color: '#B594F7',
-  },
-  {
-    name: 'Ionica Smeets',
-    title: 'Wetenschapscommunicator & hoogleraar',
-    instelling: 'Universiteit Leiden',
-    omschrijving: 'Ionica Smeets is hoogleraar Wetenschapscommunicatie aan de Universiteit Leiden. Ze is bekend van haar wekelijkse column in de Volkskrant en haar werk op televisie en radio. Haar onderzoek gaat over hoe mensen omgaan met cijfers, statistiek en wetenschappelijke onzekerheid. Ze ontving meerdere prijzen voor haar bijdrage aan het toegankelijk maken van wetenschap.',
-    website: 'https://ionicasmeets.com',
-    photo: null,
-    initials: 'IS',
-    color: '#FF6B8A',
   },
   {
     name: 'Caspar Jacobs',
@@ -61,7 +61,7 @@ const WETENSCHAPPERS = [
     website: 'https://nieuwscheckers.nl',
     photo: null,
     initials: 'PB',
-    color: '#5BC0EB',
+    color: '#FF6B8A',
   },
   {
     name: 'Suzan Verberne',
@@ -72,6 +72,26 @@ const WETENSCHAPPERS = [
     photo: null,
     initials: 'SV',
     color: '#B594F7',
+  },
+  {
+    name: 'Szuszika Sjoerds',
+    title: 'Psycholoog & onderzoeker',
+    instelling: 'Erasmus Universiteit Rotterdam',
+    omschrijving: 'Szuszika Sjoerds is onderzoeker in de cognitieve en sociale psychologie, gespecialiseerd in nieuwsgierigheid, leren en informatieverwerking. Haar onderzoek gaat over hoe mensen informatie opzoeken, beoordelen en opslaan — en hoe motivatie en emotie daarin een rol spelen. Ze verbindt fundamenteel wetenschappelijk onderzoek aan praktische toepassingen in onderwijs en communicatie.',
+    website: 'https://www.eur.nl',
+    photo: null,
+    initials: 'SS',
+    color: '#FFB347',
+  },
+  {
+    name: 'Sebo Uithol',
+    title: 'Filosoof & neurowetenschapper',
+    instelling: 'Radboud Universiteit Nijmegen',
+    omschrijving: 'Sebo Uithol is filosoof en doet onderzoek naar de relatie tussen hersenen, gedrag en bewustzijn. Hij is gespecialiseerd in de filosofie van de cognitieve wetenschap en bestudeert hoe onze hersenen beslissingen nemen, informatie integreren en tot overtuigingen komen. Zijn werk verbindt neurowetenschappen met filosofische vragen over rationaliteit en vrije wil.',
+    website: 'https://www.ru.nl',
+    photo: null,
+    initials: 'SU',
+    color: '#6BCF7F',
   },
 ]
 
