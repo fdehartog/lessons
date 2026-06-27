@@ -196,31 +196,35 @@ export default function WetenschappersPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
               {WETENSCHAPPERS.map(w => (
                 <div key={w.name} style={{ background: '#20264F', borderRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                  {/* Portrait */}
-                  <div style={{
-                    height: 280,
-                    background: w.photo
-                      ? `url(${w.photo}) center top/cover no-repeat`
-                      : `linear-gradient(135deg, ${w.color}33, ${w.color}11)`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    {!w.photo && (
-                      <div style={{ width: 80, height: 80, borderRadius: '50%', background: `linear-gradient(135deg, ${w.color}, ${w.color}aa)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, fontWeight: 900, color: '#fff', fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}>
-                        {w.initials}
-                      </div>
-                    )}
+                  {/* Top: portrait + name/title/institution */}
+                  <div style={{ display: 'flex', height: 200 }}>
+                    <div style={{
+                      width: '50%', flexShrink: 0,
+                      background: w.photo
+                        ? `url(${w.photo}) center top/cover no-repeat`
+                        : `linear-gradient(135deg, ${w.color}33, ${w.color}11)`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {!w.photo && (
+                        <div style={{ width: 72, height: 72, borderRadius: '50%', background: `linear-gradient(135deg, ${w.color}, ${w.color}aa)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 900, color: '#fff', fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}>
+                          {w.initials}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <p style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', fontWeight: 900, fontSize: 16, marginBottom: 4, lineHeight: 1.2 }}>{w.name}</p>
+                      <p style={{ fontSize: 12, color: w.color, fontWeight: 700, fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', marginBottom: 4 }}>{w.title}</p>
+                      <p style={{ fontSize: 11, color: '#8B91B8', fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', lineHeight: 1.4 }}>{w.instelling}</p>
+                    </div>
                   </div>
-                  {/* Text */}
-                  <div style={{ padding: '20px 22px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <p style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', fontWeight: 900, fontSize: 17, marginBottom: 2 }}>{w.name}</p>
-                    <p style={{ fontSize: 13, color: w.color, fontWeight: 700, fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', marginBottom: 2 }}>{w.title}</p>
-                    <p style={{ fontSize: 12, color: '#8B91B8', fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', marginBottom: 12 }}>{w.instelling}</p>
+                  {/* Bottom: description + website */}
+                  <div style={{ padding: '16px 20px 20px', borderTop: '1px solid #2F3565', display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <p style={{ fontSize: 13, color: '#C5C9E8', lineHeight: 1.6, flex: 1 }}>{w.omschrijving}</p>
                     <a
                       href={w.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700, fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', background: `${w.color}18`, color: w.color, border: `1px solid ${w.color}44`, textDecoration: 'none', marginTop: 16, alignSelf: 'flex-start' }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700, fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', background: `${w.color}18`, color: w.color, border: `1px solid ${w.color}44`, textDecoration: 'none', marginTop: 14, alignSelf: 'flex-start' }}
                     >
                       Website →
                     </a>
@@ -241,21 +245,25 @@ export default function WetenschappersPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
               {FACTCHECKERS.map(f => (
                 <div key={f.name} style={{ background: '#20264F', borderRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ height: 180, background: `linear-gradient(135deg, ${f.color}33, ${f.color}11)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ width: 80, height: 80, borderRadius: '50%', background: `linear-gradient(135deg, ${f.color}, ${f.color}aa)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, fontWeight: 900, color: '#fff', fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}>
-                      {f.initials}
+                  <div style={{ display: 'flex', height: 200 }}>
+                    <div style={{ width: '50%', flexShrink: 0, background: `linear-gradient(135deg, ${f.color}33, ${f.color}11)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: 72, height: 72, borderRadius: '50%', background: `linear-gradient(135deg, ${f.color}, ${f.color}aa)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 900, color: '#fff', fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}>
+                        {f.initials}
+                      </div>
+                    </div>
+                    <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <p style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', fontWeight: 900, fontSize: 16, marginBottom: 4, lineHeight: 1.2 }}>{f.name}</p>
+                      <p style={{ fontSize: 12, color: f.color, fontWeight: 700, fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', marginBottom: 4 }}>{f.titel}</p>
+                      <p style={{ fontSize: 11, color: '#8B91B8', fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', lineHeight: 1.4 }}>{f.instelling}</p>
                     </div>
                   </div>
-                  <div style={{ padding: '20px 22px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <p style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', fontWeight: 900, fontSize: 17, marginBottom: 2 }}>{f.name}</p>
-                    <p style={{ fontSize: 13, color: f.color, fontWeight: 700, fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', marginBottom: 2 }}>{f.titel}</p>
-                    <p style={{ fontSize: 12, color: '#8B91B8', fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', marginBottom: 12 }}>{f.instelling}</p>
+                  <div style={{ padding: '16px 20px 20px', borderTop: '1px solid #2F3565', display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <p style={{ fontSize: 13, color: '#C5C9E8', lineHeight: 1.6, flex: 1 }}>{f.omschrijving}</p>
                     <a
                       href={f.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700, fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', background: `${f.color}18`, color: f.color, border: `1px solid ${f.color}44`, textDecoration: 'none', marginTop: 16, alignSelf: 'flex-start' }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700, fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', background: `${f.color}18`, color: f.color, border: `1px solid ${f.color}44`, textDecoration: 'none', marginTop: 14, alignSelf: 'flex-start' }}
                     >
                       Website →
                     </a>
