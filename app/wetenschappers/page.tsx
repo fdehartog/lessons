@@ -198,7 +198,7 @@ export default function WetenschappersPage() {
                 <div key={w.name} style={{ background: '#20264F', borderRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                   {/* Portrait */}
                   <div style={{
-                    height: 180,
+                    height: 280,
                     background: w.photo
                       ? `url(${w.photo}) center top/cover no-repeat`
                       : `linear-gradient(135deg, ${w.color}33, ${w.color}11)`,
