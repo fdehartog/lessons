@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zin of Onzin? — Coördinator-dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400&family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F1335;--panel:#171B45;--panel-2:#1C2154;--panel-3:#232A63;
+    --line:#333A78;--line-soft:#282E63;--ink:#EDEEFC;--ink-soft:#9BA1D0;--ink-faint:#6E74AC;
+    --amber:#FFB347;--amber-soft:rgba(255,179,71,.12);--red:#FF6B8A;--green:#6BCF7F;--blue:#4A9EFF;--yellow:#FFD166;--purple:#B594F7;
+    --shadow:0 12px 34px rgba(0,0,0,.34);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+  .app{display:flex;min-height:100vh}
+  .sidebar{width:236px;flex:none;padding:26px 18px;background:linear-gradient(180deg,#12163C,#0E1230);border-right:1px solid var(--line-soft);display:flex;flex-direction:column;gap:26px;position:sticky;top:0;height:100vh}
+  .brand{display:flex;align-items:center;gap:11px}
+  .brand .bell{width:40px;height:40px;border-radius:12px;flex:none;display:grid;place-items:center;font-size:20px;background:radial-gradient(circle at 30% 30%,#B594F7,#7B5FE0);box-shadow:0 6px 16px rgba(123,95,224,.4)}
+  .brand .name{font-weight:900;font-size:17px;line-height:1.05}
+  .brand .name em{color:var(--amber);font-style:normal}
+  .nav{display:flex;flex-direction:column;gap:4px}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:11px;cursor:pointer;color:var(--ink-soft);font-weight:800;font-size:14px;border:1px solid transparent;transition:.15s;text-align:left;background:none;width:100%;font-family:inherit}
+  .nav-item .ni-ico{width:20px;text-align:center;flex:none;opacity:.9}
+  .nav-item:hover{background:var(--panel);color:var(--ink)}
+  .nav-item.active{background:linear-gradient(135deg,rgba(181,148,247,.22),rgba(74,158,255,.12));color:var(--ink);border-color:rgba(181,148,247,.35)}
+  .side-foot{margin-top:auto;background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;padding:15px}
+  .side-foot .sf-ico{font-size:20px;margin-bottom:8px}
+  .side-foot .sf-t{font-weight:900;font-size:14px;line-height:1.2}
+  .side-foot .sf-l{color:var(--amber);font-weight:800;font-size:12px;margin-top:8px}
+
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 30px;border-bottom:1px solid var(--line-soft);position:sticky;top:0;background:rgba(15,19,53,.86);backdrop-filter:blur(8px);z-index:5}
+  .topbar h1{font-size:26px;font-weight:900;letter-spacing:-.02em;line-height:1.1}
+  .topbar .subtitle{color:var(--ink-soft);font-size:13.5px;margin-top:2px}
+  .top-right{display:flex;align-items:center;gap:12px}
+  .pill-btn{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:11px;background:var(--panel);border:1px solid var(--line-soft);color:var(--ink-soft);font-weight:800;font-size:13px}
+  .user{display:flex;align-items:center;gap:9px;padding:6px 12px 6px 6px;border-radius:11px;background:var(--panel);border:1px solid var(--line-soft)}
+  .user .av{width:30px;height:30px;border-radius:8px;background:radial-gradient(circle at 30% 30%,#FFB347,#E0842B);flex:none}
+  .user .un{font-weight:800;font-size:13.5px}
+
+  .content{padding:26px 30px 70px;max-width:1220px;width:100%}
+  .view{display:none;animation:fade .25s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .angle-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
+  .angle-btn{text-align:left;border-radius:11px;padding:12px 13px;font-family:inherit;color:var(--ink);border:1px solid var(--line-soft);background:var(--panel-2);transition:.15s}
+  .angle-btn.found{background:rgba(107,207,127,.08);border-color:var(--green)}
+  .angle-btn.idle{cursor:pointer}
+  .angle-btn.idle:hover{border-color:var(--amber);background:var(--panel-3)}
+  .spin{display:inline-block;animation:spin 1s linear infinite}
+
+  .panel{background:var(--panel);border:1px solid var(--line-soft);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+  .panel-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap}
+  .panel-h h2{font-size:16px;font-weight:900;display:flex;align-items:center;gap:9px}
+  .panel-h .link{color:var(--amber);font-weight:800;font-size:13px;cursor:pointer}
+  .grid{display:grid;gap:18px}
+  .g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.g2-wide{grid-template-columns:1.4fr 1fr}
+  @media(max-width:1000px){.g4{grid-template-columns:repeat(2,1fr)}.g3,.g2-wide{grid-template-columns:1fr}}
+  @media(max-width:640px){.g4,.g2{grid-template-columns:1fr}}
+  .mt{margin-top:18px}
+
+  .kpi{background:var(--panel);border:1px solid var(--line-soft);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+  .kpi .ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:20px;margin-bottom:14px}
+  .kpi .lab{font-size:13px;font-weight:800;color:var(--ink-soft)}
+  .kpi .big{font-size:34px;font-weight:900;line-height:1;margin:6px 0 4px}
+  .kpi .cap{font-size:12px;color:var(--ink-faint);font-weight:700}
+  .ico-purple{background:rgba(181,148,247,.18);color:var(--purple)}.ico-red{background:rgba(255,107,138,.16);color:var(--red)}.ico-amber{background:var(--amber-soft);color:var(--amber)}.ico-blue{background:rgba(74,158,255,.16);color:var(--blue)}
+  .kpi.red .big{color:var(--red)}.kpi.amber .big{color:var(--amber)}.kpi.blue .big{color:var(--blue)}
+
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:900;padding:4px 10px;border-radius:999px;white-space:nowrap}
+  .chip.red{background:rgba(255,107,138,.16);color:var(--red)}.chip.green{background:rgba(107,207,127,.16);color:var(--green)}.chip.blue{background:rgba(74,158,255,.16);color:var(--blue)}.chip.amber{background:var(--amber-soft);color:var(--amber)}.chip.grey{background:var(--line-soft);color:var(--ink-soft)}.chip.purple{background:rgba(181,148,247,.16);color:var(--purple)}
+  .tag{display:inline-block;font-size:11px;font-weight:800;color:var(--ink-soft);background:var(--line-soft);border-radius:7px;padding:3px 9px}
+
+  .ld{font-size:10.5px;font-weight:900;padding:2px 8px;border-radius:7px;white-space:nowrap}
+  .ld-green{background:rgba(107,207,127,.16);color:var(--green)}.ld-amber{background:var(--amber-soft);color:var(--amber)}.ld-red{background:rgba(255,107,138,.16);color:var(--red)}
+
+  .row{display:flex;align-items:center;gap:13px;padding:13px 14px;border:1px solid var(--line-soft);border-radius:12px;background:var(--panel-2)}
+  .row + .row{margin-top:9px}
+  .row .name{font-weight:900;font-size:14px}
+  .row .meta{color:var(--ink-soft);font-size:12.5px;font-weight:600}
+  .row .spacer{flex:1}
+  .row.risk{border-color:rgba(255,107,138,.42);background:rgba(255,107,138,.06)}
+  .row.clickable{cursor:pointer;transition:.15s}
+  .row.clickable:hover{border-color:var(--amber);transform:translateX(2px)}
+  .row .chev{color:var(--ink-faint);font-weight:900}
+
+  .promise{display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-weight:600;font-size:14px;color:var(--ink-soft)}
+  .promise b{font-size:16px;color:var(--ink)}
+  .pips{display:inline-flex;gap:4px}
+  .pip{width:11px;height:11px;border-radius:50%;background:var(--line);border:1px solid var(--line)}
+  .pip.on{background:var(--green);border-color:var(--green)}.pip.warn{background:transparent;border-color:var(--red)}
+
+  .btn{font-size:12.5px;font-weight:900;padding:8px 15px;border-radius:10px;border:none;cursor:pointer;font-family:inherit;transition:.15s}
+  .btn.pri{background:var(--amber);color:var(--bg)}.btn.pri:hover{filter:brightness(1.08)}.btn.pri:disabled{opacity:.4;cursor:not-allowed}
+  .btn.green{background:var(--green);color:#0c2413}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink-soft)}.btn.ghost:hover{border-color:var(--ink-soft);color:var(--ink)}
+  .btn.sm{padding:6px 12px;font-size:11.5px}
+
+  .switch{display:inline-flex;align-items:center;gap:12px}
+  .track-sw{width:46px;height:26px;border-radius:999px;background:var(--amber-soft);border:1px solid var(--amber);position:relative;flex:none}
+  .track-sw::after{content:"";position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:var(--amber)}
+  .switch .lab{font-weight:900;font-size:14px}
+
+  .track{display:flex;align-items:center;flex-wrap:wrap;gap:2px}
+  .step{display:flex;align-items:center;gap:9px}
+  .dot{width:30px;height:30px;border-radius:50%;background:var(--panel-2);border:2px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:900;color:var(--ink-soft);flex:none}
+  .dot.done{background:rgba(107,207,127,.16);border-color:var(--green);color:var(--green)}.dot.now{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+  .step .txt{font-size:12.5px;font-weight:800;color:var(--ink-soft)}
+  .connector{width:40px;height:2px;background:var(--line);margin:0 8px}
+  @media(max-width:640px){.connector{width:14px;margin:0 3px}.step .txt{font-size:11px}}
+
+  .toggle-tabs{display:inline-flex;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:11px;padding:4px;gap:4px;margin-bottom:18px}
+  .toggle-tabs .t{padding:7px 16px;border-radius:8px;font-weight:900;font-size:13px;color:var(--ink-soft);cursor:pointer}
+  .toggle-tabs .t.on{background:var(--amber);color:var(--bg)}
+
+  .fchip{font-size:12px;font-weight:800;color:var(--ink-soft);background:var(--panel-2);border:1px solid var(--line-soft);border-radius:8px;padding:6px 12px;cursor:pointer}
+  .fchip.on{background:var(--amber);color:var(--bg);border-color:var(--amber)}
+
+  .kanban{display:grid;grid-template-columns:repeat(6,minmax(158px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px}
+  .col{background:var(--panel-2);border:1px solid var(--line-soft);border-radius:13px;padding:12px;min-width:158px}
+  .col h4{font-size:11.5px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-soft);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+  .col h4 .n{color:var(--bg);background:var(--ink-faint);border-radius:6px;padding:1px 7px;font-family:'JetBrains Mono',monospace;font-size:10.5px}
+  .card{background:var(--panel);border:1px solid var(--line-soft);border-radius:10px;padding:11px;margin-bottom:9px;border-left:3px solid var(--line);cursor:pointer;transition:.15s}
+  .card:hover{transform:translateY(-1px);border-color:var(--line)}.card:last-child{margin-bottom:0}
+  .card.urg{border-left-color:var(--red)}.card.soon{border-left-color:var(--yellow)}.card.ok{border-left-color:var(--green)}
+  .card .c-claim{font-size:12.5px;font-weight:800;line-height:1.35;margin-bottom:8px}
+  .card .c-meta{font-size:10.5px;color:var(--ink-faint);font-family:'JetBrains Mono',monospace;display:flex;justify-content:space-between;align-items:center}
+
+  .quote{font-family:'Fraunces',serif;font-style:italic;font-size:19px;color:var(--ink);line-height:1.35}
+  .afz{font-size:12.5px;color:var(--ink-soft);margin-top:7px;font-weight:700}
+  .votewrap{margin-top:16px}
+  .votebar{display:flex;height:18px;border-radius:7px;overflow:hidden;border:1px solid var(--line-soft)}
+  .votebar span{display:block}
+  .v1{background:#FF4444}.v2{background:#FF6B8A}.v3{background:#8B91B8}.v4{background:#9DD9A6}.v5{background:#6BCF7F}
+  .votelabels{display:flex;justify-content:space-between;font-size:10px;color:var(--ink-faint);margin-top:6px;font-family:'JetBrains Mono',monospace}
+
+  .match{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line-soft);border-radius:12px;background:var(--panel-2);cursor:pointer;transition:.15s}
+  .match + .match{margin-top:9px}
+  .match:hover{border-color:var(--line)}
+  .match.sel{border-color:var(--purple);background:rgba(181,148,247,.12)}
+  .match .rank{width:26px;height:26px;border-radius:50%;background:var(--panel-3);display:grid;place-items:center;font-weight:900;font-size:12px;color:var(--ink-soft);flex:none}
+  .match.sel .rank{background:var(--purple);color:#fff}
+  .match .who{font-weight:900;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .match .tags{font-size:11px;color:var(--ink-soft);font-weight:700;margin-top:2px}
+  .match .sc{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--green);font-size:15px}
+  .load-note{margin-top:12px;font-size:12px;color:var(--amber);font-weight:800;display:flex;gap:8px;align-items:flex-start}
+
+  .reuse{background:rgba(107,207,127,.10);border:1px solid rgba(107,207,127,.42);border-radius:13px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px}
+  .reuse .txt{font-size:13.5px;font-weight:900;color:var(--green)}.reuse .spacer{flex:1}
+  .ai-foot{border-top:1px solid var(--line-soft);margin-top:12px;padding-top:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+  .alarm-list{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  @media(max-width:640px){.alarm-list{grid-template-columns:1fr}}
+  .alarm{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:11px;background:var(--panel-2);border:1px solid var(--line-soft)}
+  .alarm .sw{width:12px;height:12px;border-radius:4px;flex:none}
+  .alarm .code{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:12px;color:var(--ink-faint)}
+  .alarm .nm{font-weight:800;font-size:13.5px}
+
+  .tmpl{display:flex;align-items:center;gap:13px;padding:14px;border:1px solid var(--line-soft);border-radius:12px;background:var(--panel-2)}
+  .tmpl + .tmpl{margin-top:10px}
+  .tmpl .ti{width:38px;height:38px;border-radius:10px;background:var(--panel-3);display:grid;place-items:center;font-size:17px;flex:none}
+  .tmpl .tt{font-weight:900;font-size:14px}.tmpl .td{font-size:12px;color:var(--ink-soft);font-weight:600}
+
+  .bound{display:flex;align-items:flex-start;gap:12px;padding:13px 15px;border:1px solid var(--line-soft);border-radius:12px;background:var(--panel-2)}
+  .bound + .bound{margin-top:10px}
+  .bound.stop{border-color:rgba(255,107,138,.42);background:rgba(255,107,138,.06)}
+  .bound .bt{font-weight:800;font-size:13px;line-height:1.45}
+
+  .cov{display:flex;align-items:center;gap:14px;padding:13px 15px;border:1px solid var(--line-soft);border-radius:12px;background:var(--panel-2);flex-wrap:wrap}
+  .cov + .cov{margin-top:9px}
+  .cov .cn{font-weight:900;font-size:13.5px;min-width:150px}
+  .cov .cbar{flex:1;height:8px;border-radius:5px;background:var(--line-soft);overflow:hidden;min-width:90px}
+  .cov .cbar i{display:block;height:100%;border-radius:5px}
+  .cov .cm{font-size:12px;color:var(--ink-soft);font-weight:700;white-space:nowrap}
+  .cov.amber{border-color:rgba(255,179,71,.35)}
+  .cov.red{border-color:rgba(255,107,138,.4);background:rgba(255,107,138,.05)}
+
+  .cand-row{display:flex;align-items:center;gap:13px;padding:13px 15px;border:1px solid var(--line-soft);border-radius:12px;background:var(--panel-2);flex-wrap:wrap}
+  .cand-row + .cand-row{margin-top:9px}
+  .cand-row .cav{width:36px;height:36px;border-radius:10px;background:var(--panel-3);display:grid;place-items:center;font-size:15px;flex:none}
+  .cand-row .cname{font-weight:900;font-size:14px}
+  .cand-row .cfield{font-size:11.5px;color:var(--ink-soft);font-weight:700}
+  .cand-row .cby{font-size:11.5px;color:var(--ink-soft);font-weight:700}
+  .cand-row .cby b{color:var(--amber)}
+
+  .back{display:inline-flex;align-items:center;gap:7px;color:var(--ink-soft);font-weight:900;font-size:13px;cursor:pointer;margin-bottom:16px}
+  .back:hover{color:var(--amber)}
+  .sess-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:20px 22px;border-radius:16px;background:linear-gradient(135deg,#1A1F52,#141838);border:1px solid var(--line-soft);margin-bottom:20px}
+  .sess-head .sh-cls{font-size:22px;font-weight:900}
+  .sess-head .sh-meta{color:var(--ink-soft);font-size:13px;font-weight:700;margin-top:4px}
+  .sh-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .kw-group{font-size:11.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin:4px 0 11px;display:flex;align-items:center;gap:8px}
+  .kw-group.fav{color:var(--amber)}
+  .kw-item{display:flex;align-items:center;gap:12px;padding:13px 14px;border:1px solid var(--line-soft);border-radius:12px;background:var(--panel-2);cursor:pointer;transition:.15s}
+  .kw-item + .kw-item{margin-top:9px}
+  .kw-item:hover{border-color:var(--amber);transform:translateX(2px)}
+  .kw-item.sel{border-color:var(--purple);background:rgba(181,148,247,.10)}
+  .kw-item .star{font-size:15px;flex:none}
+  .kw-item .kw-claim{font-weight:800;font-size:13.5px;line-height:1.3}
+  .kw-item .kw-afz{font-size:11.5px;color:var(--ink-faint);font-weight:700;margin-top:2px}
+  .kw-item .spacer{flex:1}
+  .detail-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:44px 20px;color:var(--ink-faint);min-height:220px}
+  .detail-empty .de-ico{font-size:34px;margin-bottom:12px;opacity:.7}
+  .detail-empty .de-t{font-weight:800;font-size:14px;color:var(--ink-soft)}
+  .toast{background:rgba(107,207,127,.14);border:1px solid rgba(107,207,127,.5);border-radius:12px;padding:13px 15px;color:var(--green);font-weight:900;font-size:13.5px;display:flex;align-items:center;gap:9px;margin-bottom:16px}
+  .caption{font-size:12px;color:var(--ink-faint);font-style:italic;font-family:'Fraunces',serif;margin-top:12px}
+  .modal-x{background:none;border:none;color:var(--ink-soft);font-size:18px;cursor:pointer;font-weight:900}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(6,8,26,.72);backdrop-filter:blur(4px);z-index:50;display:none;align-items:flex-start;justify-content:center;padding:36px 16px;overflow:auto}
+  .modal-overlay.open{display:flex}
+  .modal{width:100%;max-width:720px;background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.5);overflow:hidden}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line-soft)}
+  .stepper{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:900}
+  .stepper .s{display:flex;align-items:center;gap:8px;color:var(--ink-faint)}
+  .stepper .s.on{color:var(--ink)}
+  .stepper .s .num{width:22px;height:22px;border-radius:50%;background:var(--panel-3);display:grid;place-items:center;font-size:11px}
+  .stepper .s.on .num{background:var(--amber);color:var(--bg)}
+  .stepper .sep{width:22px;height:2px;background:var(--line)}
+  .modal-body{padding:22px;max-height:70vh;overflow:auto}
+  .modal-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:15px 22px;border-top:1px solid var(--line-soft);background:var(--panel-2)}
+  .cand{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line-soft);border-radius:12px;background:var(--panel-2);cursor:pointer;transition:.15s}
+  .cand + .cand{margin-top:9px}
+  .cand:hover{border-color:var(--line)}
+  .cand.on{border-color:var(--green);background:rgba(107,207,127,.08)}
+  .cand.locked{cursor:default;border-color:rgba(181,148,247,.4);background:rgba(181,148,247,.08)}
+  .cbox{width:20px;height:20px;border-radius:6px;border:2px solid var(--line);display:grid;place-items:center;flex:none;font-size:12px;color:transparent}
+  .cand.on .cbox{background:var(--green);border-color:var(--green);color:#0c2413}
+  .cand.locked .cbox{background:var(--purple);border-color:var(--purple);color:#fff}
+  .cand .cl{font-weight:800;font-size:13px;line-height:1.3}
+  .cand .csub{font-size:11px;color:var(--ink-faint);font-weight:700;margin-top:2px}
+  .cand .csc{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--green);font-size:13.5px}
+  .eyebrow{font-size:11px;color:var(--ink-faint);font-weight:900;letter-spacing:.05em;margin:0 0 9px;text-transform:uppercase}
+  .mailbody{background:#fff;color:#1a1a2e;border-radius:12px;padding:22px;font-size:14px;line-height:1.65}
+  .mailbody [contenteditable]{outline:none;border-radius:6px;padding:2px 4px;margin:-2px -4px;transition:.15s}
+  .mailbody [contenteditable]:hover{background:#f5f3ff}
+  .mailbody [contenteditable]:focus{background:#f3f0ff;box-shadow:0 0 0 2px #b594f7}
+  .mailbody ul{margin:14px 0;padding-left:20px}
+  .mailbody li{margin:5px 0}
+  .mail-link{display:inline-block;margin-top:8px;background:#7B5FE0;color:#fff;font-weight:800;padding:10px 18px;border-radius:9px;text-decoration:none;font-size:13px}
+  .ctoast{font-size:12.5px;font-weight:900;color:var(--green)}
+
+  .page-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--panel);border:1px solid var(--green);color:var(--green);font-weight:900;font-size:13.5px;padding:13px 20px;border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.4);z-index:80;opacity:0;pointer-events:none;transition:.3s;max-width:90vw;text-align:center}
+  .page-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media(max-width:860px){
+    .app{flex-direction:column}
+    .sidebar{width:100%;height:auto;position:static;flex-direction:column;gap:16px}
+    .nav{flex-direction:row;overflow-x:auto;gap:6px}
+    .nav-item{white-space:nowrap;flex:none}
+    .side-foot{display:none}
+    .content{padding:20px 16px 60px}.topbar{padding:18px 16px}.topbar h1{font-size:21px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand"><div class="bell">🔔</div><div class="name">Zin <em>of</em><br>Onzin?</div></div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="dashboard" data-title="Coördinator-dashboard" data-sub="Overzicht, sessies en koppelingen in één oogopslag."><span class="ni-ico">▦</span> Dashboard</button>
+      <button class="nav-item" data-view="klassen" data-title="Klassen &amp; Planning" data-sub="Waar staat elke klas in de lescyclus."><span class="ni-ico">👥</span> Klassen &amp; Planning</button>
+      <button class="nav-item" data-view="kwesties" data-title="Kwesties" data-sub="Alle kwesties op één plek — klik er een om 'm op te pakken."><span class="ni-ico">💬</span> Kwesties</button>
+      <button class="nav-item" data-view="wetenschappers" data-title="Wetenschappers" data-sub="Belasting, dekking en werving — de capaciteit van je panel."><span class="ni-ico">🔬</span> Wetenschappers</button>
+      <button class="nav-item" data-view="instellingen" data-title="Instellingen" data-sub="Templates, timing en grenzen."><span class="ni-ico">⚙</span> Instellingen</button>
+    </nav>
+    <div class="side-foot"><div class="sf-ico">📖</div><div class="sf-t">Handleiding<br>Coördinator</div><div class="sf-l">Bekijk de guide ↗</div></div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div><h1 id="pageTitle">Coördinator-dashboard</h1><div class="subtitle" id="pageSub">Overzicht, sessies en koppelingen in één oogopslag.</div></div>
+      <div class="top-right"><div class="pill-btn">📊 Rapportages</div><div class="user"><span class="av"></span><span class="un">Friso ▾</span></div></div>
+    </header>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view active" id="dashboard">
+        <div class="grid g4">
+          <div class="kpi"><div class="ico ico-purple">👥</div><div class="lab">Actieve klassen</div><div class="big">24</div><div class="cap">+3 t.o.v. vorige week</div></div>
+          <div class="kpi red"><div class="ico ico-red">⚠</div><div class="lab">Sessies at-risk</div><div class="big">2</div><div class="cap">marge weg vóór Les 3</div></div>
+          <div class="kpi amber"><div class="ico ico-amber">✋</div><div class="lab">Wacht op jouw keuze</div><div class="big">7</div><div class="cap">match klaar of werven</div></div>
+          <div class="kpi blue"><div class="ico ico-blue">🕓</div><div class="lab">Wetenschappers stil</div><div class="big">3</div><div class="cap">reminder rijp</div></div>
+        </div>
+        <div class="grid g2-wide mt">
+          <div class="panel">
+            <div class="panel-h"><h2>⚠ Sessies at-risk voor Les 3</h2><span class="link">Alle sessies →</span></div>
+            <div class="row risk clickable" onclick="openSession('2vwo')"><span class="name">2VWO · Lorentz Casimir</span><span class="spacer"></span><span class="meta">Les 3 · overmorgen</span><span class="promise"><span class="pips"><span class="pip warn"></span><span class="pip"></span></span><b>0</b>/2</span><span class="chip red">rood</span><span class="chev">›</span></div>
+            <div class="row clickable" onclick="openSession('3vwo')"><span class="name">3VWO · Luzac</span><span class="spacer"></span><span class="meta">Les 3 · 4 dagen</span><span class="promise"><span class="pips"><span class="pip on"></span><span class="pip"></span></span><b>1</b>/2</span><span class="chip amber">krap</span><span class="chev">›</span></div>
+            <div class="row clickable" onclick="openSession('1b')"><span class="name">1B · Het Stedelijk</span><span class="spacer"></span><span class="meta">Les 3 · 8 dagen</span><span class="promise"><span class="pips"><span class="pip on"></span><span class="pip on"></span></span><b>2</b>/2</span><span class="chip green">gehaald</span><span class="chev">›</span></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h2>✋ Wacht op jouw keuze</h2></div>
+            <div class="row" style="padding:11px 13px"><span class="name" style="font-size:13px">Citroenwater verbrandt vet</span><span class="spacer"></span><span class="chip blue">match klaar</span></div>
+            <div class="row" style="padding:11px 13px"><span class="name" style="font-size:13px">Maanlanding 1969 was nep</span><span class="spacer"></span><span class="chip amber">geen match</span></div>
+            <div class="row" style="padding:11px 13px"><span class="name" style="font-size:13px">5G-straling gevaarlijk</span><span class="spacer"></span><span class="chip blue">match klaar</span></div>
+            <button class="btn pri" style="width:100%;margin-top:12px" onclick="go('kwesties')">Naar kwesties →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- KLASSEN -->
+      <section class="view" id="klassen">
+        <div class="toggle-tabs"><span class="t on">Kalender</span><span class="t">Lijst</span></div>
+        <div class="panel">
+          <div class="panel-h"><h2>Lescyclus · 3VWO Luzac</h2><span class="chip amber">portal open</span></div>
+          <div class="track">
+            <div class="step"><span class="dot done">1</span><span class="txt">Les 1 · Digiwijzer</span></div><span class="connector"></span>
+            <div class="step"><span class="dot now">📥</span><span class="txt">Portal open</span></div><span class="connector"></span>
+            <div class="step"><span class="dot">2</span><span class="txt">Les 2 · stemmen</span></div><span class="connector"></span>
+            <div class="step"><span class="dot">3</span><span class="txt">Les 3 · antwoorden</span></div>
+          </div>
+        </div>
+        <div class="panel mt">
+          <div class="panel-h"><h2>Klassen</h2><span class="link">Alle 24 →</span></div>
+          <div class="row clickable" onclick="openSession('2a')"><span class="chip grey">2A</span><span class="name" style="font-size:13px">Groningen College</span><span class="spacer"></span><span class="chip green">Les 2 gehad</span><span class="tag">2 doorgestuurd</span><span class="chev">›</span></div>
+          <div class="row clickable" onclick="openSession('3vwo')"><span class="chip grey">3VWO</span><span class="name" style="font-size:13px">Luzac</span><span class="spacer"></span><span class="chip amber">portal open</span><span class="tag">14 verzameld</span><span class="chev">›</span></div>
+          <div class="row clickable" onclick="openSession('1b')"><span class="chip grey">1B</span><span class="name" style="font-size:13px">Het Stedelijk</span><span class="spacer"></span><span class="chip blue">Les 3 gepland</span><span class="tag">2/2 klaar</span><span class="chev">›</span></div>
+          <div class="row clickable" onclick="openSession('2vwo')"><span class="chip grey">2VWO</span><span class="name" style="font-size:13px">Lorentz Casimir</span><span class="spacer"></span><span class="chip red">at-risk</span><span class="tag">6 inzendingen</span><span class="chev">›</span></div>
+        </div>
+      </section>
+
+      <!-- SESSIE -->
+      <section class="view" id="sessie">
+        <div class="back" onclick="go('dashboard')">← Terug naar dashboard</div>
+        <div id="sessieBody"></div>
+      </section>
+
+      <!-- KWESTIES -->
+      <section class="view" id="kwesties">
+        <div class="panel">
+          <div class="panel-h"><h2>💬 Pijplijn</h2><span class="meta" style="color:var(--ink-faint)">gekleurd op urgentie t.o.v. Les 3</span></div>
+          <div class="kanban" id="pipelineWrap"></div>
+        </div>
+        <div id="kwestieDetail"></div>
+        <div class="panel mt">
+          <div class="panel-h"><h2>Alle kwesties</h2>
+            <div id="kwFilters" style="display:flex;gap:7px;flex-wrap:wrap">
+              <span class="fchip on" data-f="alle" onclick="setFilter('alle')">Alle</span>
+              <span class="fchip" data-f="tekoppelen" onclick="setFilter('tekoppelen')">Te koppelen</span>
+              <span class="fchip" data-f="onderweg" onclick="setFilter('onderweg')">Onderweg</span>
+              <span class="fchip" data-f="klaar" onclick="setFilter('klaar')">Klaar</span>
+            </div>
+          </div>
+          <div id="kwestieList"></div>
+        </div>
+      </section>
+
+      <!-- WETENSCHAPPERS -->
+      <section class="view" id="wetenschappers">
+        <div class="panel" style="border-color:rgba(255,179,71,.4);background:linear-gradient(135deg,rgba(255,179,71,.10),rgba(23,27,69,1))">
+          <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+            <div style="font-size:24px">💡</div>
+            <div style="flex:1;min-width:240px">
+              <div style="font-weight:900;font-size:15px;margin-bottom:4px">Waar wordt je panel dun?</div>
+              <div style="color:var(--ink-soft);font-size:13px;font-weight:600">De afgelopen weken kwamen er <b style="color:var(--ink)">6 kwesties over voeding &amp; gezondheid</b> binnen, met een gemiddelde beste match van maar <b style="color:var(--amber)">58%</b>. Je dekt het nu met rekfits, niet met een specialist.</div>
+            </div>
+            <button class="btn pri" onclick="openWerving('Voeding & gezondheid')">Werf een specialist</button>
+          </div>
+        </div>
+        <div class="panel mt">
+          <div class="panel-h"><h2>🔬 Panel &amp; belasting</h2><span class="link">Wetenschapper toevoegen →</span></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+            <span class="ld ld-green">● ruimte</span><span class="ld ld-amber">● bijna vol</span><span class="ld ld-red">● overvraagd</span>
+            <span style="font-size:11.5px;color:var(--ink-faint);font-weight:700;align-self:center">· belasting = open kwesties t.o.v. eigen cap, zwaarder bij nabije deadlines · betrouwbaarheid staat er los van</span>
+          </div>
+          <div class="row"><span class="name">Ili Ma</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag">jongeren</span><span class="tag">beïnvloeding</span></span><span class="spacer"></span><span class="ld ld-green">ruimte · 0/3</span><span class="meta">reageert 82%</span></div>
+          <div class="row"><span class="name">Alexander Pleijter</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag">factchecking</span><span class="tag">journalistiek</span></span><span class="spacer"></span><span class="ld ld-green">ruimte · 1/4</span><span class="meta">reageert 88%</span></div>
+          <div class="row"><span class="name">Peter Burger</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag">nepnieuws</span><span class="tag">broodje-aap</span></span><span class="spacer"></span><span class="ld ld-amber">bijna vol · 3/4</span><span class="meta">reageert 90%</span></div>
+          <div class="row"><span class="name">Suzan Verberne</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag">AI</span><span class="tag">taalmodellen</span></span><span class="spacer"></span><span class="ld ld-red">overvraagd · 4/3</span><span class="meta">reageert 75%</span></div>
+        </div>
+        <div class="panel mt">
+          <div class="panel-h"><h2>🗺 Dekking per onderwerp</h2><span class="chip grey">wint aan scherpte bij meer volume</span></div>
+          <div class="cov"><span class="cn">Nepnieuws &amp; media</span><span class="cbar"><i style="width:88%;background:var(--green)"></i></span><span class="cm">3 experts · gem. match 84%</span></div>
+          <div class="cov"><span class="cn">AI &amp; techniek</span><span class="cbar"><i style="width:80%;background:var(--green)"></i></span><span class="cm">2 experts · gem. match 80%</span></div>
+          <div class="cov amber"><span class="cn">Voeding &amp; gezondheid</span><span class="cbar"><i style="width:58%;background:var(--amber)"></i></span><span class="cm">6 kwesties · gem. 58%</span><button class="btn ghost sm" onclick="openWerving('Voeding & gezondheid')">Werf</button></div>
+          <div class="cov red"><span class="cn">Ruimtevaart / historisch</span><span class="cbar"><i style="width:15%;background:var(--red)"></i></span><span class="cm">2× geen match</span><button class="btn ghost sm" onclick="openWerving('Ruimtevaart / historisch')">Werf</button></div>
+          <p class="caption">Twee signalen verraden een gat: onderwerpen waar "geen match" herhaald afgaat, én onderwerpen waar de beste match chronisch laag blijft.</p>
+        </div>
+        <div class="panel mt">
+          <div class="panel-h"><h2>🤝 Kandidaten &amp; werving</h2><button class="btn ghost sm" onclick="askSuggest('')">Vraag experts om aan te dragen</button></div>
+          <div class="cand-row"><span class="cav">👩‍🔬</span><div><div class="cname">dr. Marleen Vos</div><div class="cfield">voedingswetenschapper · Wageningen</div></div><span class="spacer"></span><span class="cby">aangedragen door <b>dr. Ili Ma</b></span><button class="btn pri sm" onclick="inviteCandidate(this,'dr. Marleen Vos')">Nodig uit</button></div>
+          <div class="cand-row"><span class="cav">👨‍🚀</span><div><div class="cname">prof. Jan de Vries</div><div class="cfield">ruimtevaarthistoricus · TU Delft</div></div><span class="spacer"></span><span class="cby">aangedragen door <b>Alexander Pleijter</b></span><button class="btn pri sm" onclick="inviteCandidate(this,'prof. Jan de Vries')">Nodig uit</button></div>
+          <div class="cand-row"><span class="cav">⚛️</span><div><div class="cname">dr. Sanne Bakker</div><div class="cfield">natuurkunde / straling · Leiden</div></div><span class="spacer"></span><span class="cby">aangedragen door <b>Peter Burger</b></span><span class="chip blue">uitgenodigd ✓</span></div>
+          <p class="caption">We vragen experts vlak nadat ze een antwoord opnemen of ze een collega kennen — op dat moment van goodwill converteert het aandragen het best. In de uitnodiging staat de naam van de aandrager vooraan.</p>
+        </div>
+      </section>
+
+      <!-- WERVING (thema-batch) -->
+      <section class="view" id="werving">
+        <div class="back" onclick="go('wetenschappers')">← Terug naar wetenschappers</div>
+        <div id="wervingBody"></div>
+      </section>
+
+      <!-- INSTELLINGEN -->
+      <section class="view" id="instellingen">
+        <div class="grid g2">
+          <div class="panel">
+            <div class="panel-h"><h2>✉ Mailtemplates</h2></div>
+            <div class="tmpl"><span class="ti">🔗</span><div><div class="tt">Uitnodiging kwesties</div><div class="td">Magic-link · alle kwesties per wetenschapper in één mail</div></div></div>
+            <div class="tmpl"><span class="ti">🤝</span><div><div class="tt">Uitnodiging nieuwe expert</div><div class="td">Naam van de aandrager vooraan · magic-link, geen account</div></div></div>
+            <div class="tmpl"><span class="ti">🔔</span><div><div class="tt">Herinnering</div><div class="td">Beleefde "nog een weekje?" · standaardtekst</div></div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h2>🔔 Alarmbellen</h2></div>
+            <div class="alarm-list">
+              <div class="alarm"><span class="sw" style="background:#FF9A6C"></span><span class="code">A1</span><span class="nm">Belang</span></div>
+              <div class="alarm"><span class="sw" style="background:#FFB347"></span><span class="code">A2</span><span class="nm">Gezag</span></div>
+              <div class="alarm"><span class="sw" style="background:#B594F7"></span><span class="code">A3</span><span class="nm">Herkomst</span></div>
+              <div class="alarm"><span class="sw" style="background:#4A9EFF"></span><span class="code">A4</span><span class="nm">Onderbouwing</span></div>
+              <div class="alarm"><span class="sw" style="background:#6BCF7F"></span><span class="code">A5</span><span class="nm">Logica</span></div>
+              <div class="alarm"><span class="sw" style="background:#FF6B8A"></span><span class="code">A6</span><span class="nm">Te simpel / te zeker</span></div>
+              <div class="alarm"><span class="sw" style="background:#5BC0EB"></span><span class="code">A7</span><span class="nm">Vaag</span></div>
+              <div class="alarm"><span class="sw" style="background:#FFD166"></span><span class="code">A8</span><span class="nm">Manipulatie</span></div>
+              <div class="alarm"><span class="sw" style="background:#F78FB3"></span><span class="code">A9</span><span class="nm">Verspreidingskracht</span></div>
+              <div class="alarm"><span class="sw" style="background:#9D8DF1"></span><span class="code">A10</span><span class="nm">AI</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel mt">
+          <div class="panel-h"><h2>✉ Reminder-automaat</h2><div class="switch"><span class="track-sw"></span><span class="lab" style="font-size:13px">Automatisch</span></div></div>
+          <div class="bound"><span class="chip grey">grens</span><span class="bt">Alleen de standaard-herinnering, alleen op het vaste schema.</span></div>
+          <div class="bound stop"><span class="chip red">stop</span><span class="bt">De automaat stopt zodra een sessie richting rood dreigt — dan komt het weer bij jou.</span></div>
+          <div class="bound"><span class="chip amber">log</span><span class="bt">Logboek per wetenschapper: wat is er namens jou verstuurd, en wanneer.</span></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- COMPOSE MODAL -->
+<div class="modal-overlay" id="composeModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="stepper"><span class="s on" id="st1"><span class="num">1</span> Bundelen</span><span class="sep" id="stSep"></span><span class="s" id="st2"><span class="num">2</span> Mail opstellen</span></div>
+      <button class="modal-x" onclick="closeCompose()">✕</button>
+    </div>
+    <div class="modal-body" id="composeBody"></div>
+    <div class="modal-foot" id="composeFoot"></div>
+  </div>
+</div>
+
+<div class="page-toast" id="pageToast"></div>
+
+<script>
+  const items=document.querySelectorAll('.nav-item');
+  const views=document.querySelectorAll('.view');
+  const title=document.getElementById('pageTitle');
+  const sub=document.getElementById('pageSub');
+  function showView(id){views.forEach(v=>v.classList.toggle('active',v.id===id));window.scrollTo({top:0,behavior:'smooth'});}
+  function setNavActive(id){items.forEach(i=>i.classList.toggle('active',i.dataset.view===id));}
+  function go(id){showView(id);setNavActive(id);const b=[...items].find(i=>i.dataset.view===id);if(b){title.innerHTML=b.dataset.title;sub.textContent=b.dataset.sub;}if(id==='kwesties'){renderPipeline();renderKwestieList();}}
+  items.forEach(i=>i.addEventListener('click',()=>go(i.dataset.view)));
+
+  const SCIENTISTS={
+    'Suzan Verberne':{open:4,cap:3,level:'red'},'Peter Burger':{open:3,cap:4,level:'amber'},
+    'Alexander Pleijter':{open:1,cap:4,level:'green'},'Ili Ma':{open:0,cap:3,level:'green'},'Zsuzsika Sjoerds':{open:0,cap:2,level:'green'},
+  };
+  const LOADLABEL={green:'ruimte',amber:'bijna vol',red:'overvraagd'};
+  function loadPill(name){const s=SCIENTISTS[name];if(!s)return '';return `<span class="ld ld-${s.level}">${LOADLABEL[s.level]} ${s.open}/${s.cap}</span>`;}
+
+  const SESSIONS={
+    '2vwo':{cls:'2VWO · Lorentz Casimir',les3:'overmorgen',les3chip:'red',days:2,have:0,promise:2,
+      kwesties:[
+        {claim:'Drinken van citroenwater verbrandt vet',afz:'wellness-influencer op TikTok',fav:true,favType:'klas · verdeeld',votes:[38,23,20,12,7],n:26,alarm:['A1 Belang','A2 Gezag'],stage:'doorgestuurd',answered:true,answeredBy:'dr. Suzan Verberne',match:[['Suzan Verberne','AI · taal',92],['Ili Ma','jongeren',71]]},
+        {claim:'Suiker is verslavender dan cocaïne',afz:'gezondheidsblog',fav:true,favType:'klas · verdeeld',votes:[16,24,32,18,10],n:26,alarm:['A6 Te simpel','A4 Onderbouwing'],stage:'doorgestuurd',answered:false,match:[['Ili Ma','gedrag',68],['Suzan Verberne','AI · taal',41]]},
+        {claim:'Een kettingbericht laat je telefoon crashen',afz:'viral WhatsApp-bericht',fav:true,favType:'docentfavoriet',votes:[52,20,14,8,6],n:26,alarm:['A9 Verspreidingskracht','A8 Manipulatie'],stage:'match',answered:false,match:[['Alexander Pleijter','online journalistiek',74],['Peter Burger','nepnieuws',66]]},
+        {claim:'Bananen zijn radioactief en gevaarlijk',afz:'gezondheidsforum',fav:false,favType:'',votes:[44,26,18,8,4],n:26,alarm:['A6 Te simpel'],stage:'doorgestuurd',answered:false,match:[['Ili Ma','gedrag',55]]},
+        {claim:'Je gebruikt maar 10% van je hersenen',afz:'motivatie-account',fav:false,favType:'',votes:[30,28,22,12,8],n:26,alarm:['A2 Gezag'],stage:'teruggekoppeld',assignedTo:'dr. Zsuzsika Sjoerds',answered:true,answeredBy:'dr. Zsuzsika Sjoerds',match:[['Zsuzsika Sjoerds','cognitie',88]]},
+        {claim:'Wortels verbeteren je nachtzicht sterk',afz:'oma-wijsheid',fav:false,favType:'',votes:[22,30,30,12,6],n:26,alarm:['A4 Onderbouwing'],stage:'doorgestuurd',answered:false,match:[['Ili Ma','gedrag',52]]},
+      ]},
+    '3vwo':{cls:'3VWO · Luzac',les3:'4 dagen',les3chip:'amber',days:4,have:1,promise:2,
+      kwesties:[
+        {claim:'5G-masten verzwakken je immuunsysteem',afz:'complot-kanaal op YouTube',fav:true,favType:'klas · verdeeld',votes:[40,22,20,12,6],n:24,alarm:['A3 Herkomst','A2 Gezag'],stage:'gekoppeld',assignedTo:'Alexander Pleijter',answered:false,match:[['Alexander Pleijter','factchecking',70],['Peter Burger','nepnieuws',58]]},
+        {claim:'Honden zien alleen zwart-wit',afz:'dieren-account',fav:true,favType:'klas · verdeeld',votes:[18,26,30,16,10],n:24,alarm:['A6 Te simpel'],stage:'beantwoord',assignedTo:'bioloog-panel',answered:true,answeredBy:'bioloog-panel',match:[]},
+        {claim:'Kauwgom kost meer calorieën dan het bevat',afz:'afval-tip',fav:false,favType:'',votes:[28,30,24,12,6],n:24,alarm:['A5 Logica'],stage:'doorgestuurd',answered:false,match:[['Ili Ma','gedrag',49]]},
+      ]},
+    '1b':{cls:'1B · Het Stedelijk',les3:'8 dagen',les3chip:'green',days:8,have:2,promise:2,
+      kwesties:[
+        {claim:'AI neemt binnenkort al ons werk over',afz:'nieuwsvideo',fav:true,favType:'klas · verdeeld',votes:[20,24,28,18,10],n:23,alarm:['A6 Te simpel','A10 AI'],stage:'uitgenodigd',assignedTo:'Suzan Verberne',answered:false,match:[['Suzan Verberne','AI',94]]},
+        {claim:'Vissen voelen geen pijn',afz:'hengelsport-forum',fav:true,favType:'docentfavoriet',votes:[26,28,26,14,6],n:23,alarm:['A4 Onderbouwing'],stage:'teruggekoppeld',assignedTo:'bioloog-panel',answered:true,answeredBy:'bioloog-panel',match:[]},
+      ]},
+    '2a':{cls:'2A · Groningen College',les3:'3 dagen',les3chip:'amber',days:3,have:0,promise:2,
+      kwesties:[
+        {claim:'De maanlanding van 1969 was nep',afz:'complot-documentaire',fav:true,favType:'klas · verdeeld',votes:[34,22,22,14,8],n:28,alarm:['A3 Herkomst','A2 Gezag'],stage:'doorgestuurd',answered:false,match:[]},
+        {claim:'Vaccins veroorzaken autisme',afz:'anti-vax pagina',fav:true,favType:'klas · verdeeld',votes:[46,20,18,10,6],n:28,alarm:['A3 Herkomst','A4 Onderbouwing'],stage:'match',answered:false,match:[['Alexander Pleijter','factchecking',77],['Peter Burger','nepnieuws',72]]},
+      ]},
+  };
+
+  /* ---- helpers shared ---- */
+  function pipHTML(have,promise){let s='';for(let i=0;i<promise;i++)s+=`<span class="pip ${i<have?'on':'warn'}"></span>`;return `<span class="pips">${s}</span><b>${have}</b>/${promise}`;}
+  function allKw(){const a=[];Object.keys(SESSIONS).forEach(sid=>SESSIONS[sid].kwesties.forEach((k,ki)=>a.push({sid,ki,k})));return a;}
+  function stageOf(k){return k.stage||'doorgestuurd';}
+  function urg(days){return days<=3?'urg':days<=6?'soon':'ok';}
+  const STAGEMAP={doorgestuurd:['grey','doorgestuurd'],match:['purple','match voorgesteld'],gekoppeld:['blue','gekoppeld'],uitgenodigd:['blue','uitgenodigd'],beantwoord:['green','beantwoord'],teruggekoppeld:['green','teruggekoppeld']};
+  function stageChip(k){const m=STAGEMAP[stageOf(k)];return `<span class="chip ${m[0]}">${m[1]}</span>`;}
+
+  /* ================= KWESTIES PAGE ================= */
+  const STAGES=[['doorgestuurd','Doorgestuurd'],['match','Match voorgesteld'],['gekoppeld','Gekoppeld'],['uitgenodigd','Uitgenodigd'],['beantwoord','Beantwoord'],['teruggekoppeld','Teruggekoppeld']];
+  function freshKW(sid,ki){return {sid:sid==null?null:sid,ki:ki==null?null:ki,sci:0,web:'idle',angleSet:0,angles:[],aStatus:{},aExpert:{},aIdx:{}};}
+  let KW=freshKW();
+  let KWFILTER='alle';
+
+  function renderPipeline(){
+    const wrap=document.getElementById('pipelineWrap');if(!wrap)return;
+    wrap.innerHTML=STAGES.map(([st,label])=>{
+      const cards=allKw().filter(x=>stageOf(x.k)===st);
+      return `<div class="col"><h4>${label} <span class="n">${cards.length}</span></h4>${cards.map(x=>`<div class="card ${urg(SESSIONS[x.sid].days)}" onclick="openKwestie('${x.sid}',${x.ki})"><div class="c-claim">${x.k.claim}</div><div class="c-meta"><span>${SESSIONS[x.sid].cls.split(' · ')[0]}</span><span>${SESSIONS[x.sid].days}d</span></div></div>`).join('')||'<div style="color:var(--ink-faint);font-size:11px;font-weight:700">—</div>'}</div>`;
+    }).join('');
+  }
+  function grp(st){return (st==='doorgestuurd'||st==='match')?'tekoppelen':(st==='gekoppeld'||st==='uitgenodigd')?'onderweg':'klaar';}
+  function setFilter(f){KWFILTER=f;renderKwestieList();}
+  function renderKwestieList(){
+    const wrap=document.getElementById('kwestieList');if(!wrap)return;
+    document.querySelectorAll('#kwFilters .fchip').forEach(c=>c.classList.toggle('on',c.dataset.f===KWFILTER));
+    let list=allKw().filter(x=>KWFILTER==='alle'||grp(stageOf(x.k))===KWFILTER);
+    list.sort((a,b)=>SESSIONS[a.sid].days-SESSIONS[b.sid].days);
+    wrap.innerHTML=list.map(x=>{
+      const k=x.k,s=SESSIONS[x.sid],u=urg(s.days);
+      const border=u==='urg'?'var(--red)':u==='soon'?'var(--yellow)':'var(--green)';
+      const assigned=k.assignedTo?`<span class="meta">→ ${k.assignedTo}</span>`:'';
+      return `<div class="kw-item ${KW.sid===x.sid&&KW.ki===x.ki?'sel':''}" style="border-left:3px solid ${border}" onclick="openKwestie('${x.sid}',${x.ki})">
+        <div><div class="kw-claim">${k.claim}</div><div class="kw-afz">${s.cls.split(' · ')[0]} · afzender ${k.afz}</div></div>
+        <span class="spacer"></span>${assigned}${stageChip(k)}<span class="meta">${s.days}d</span><span class="chev" style="color:var(--ink-faint);font-weight:900">›</span>
+      </div>`;
+    }).join('');
+  }
+  function openKwestie(sid,ki){KW=freshKW(sid,ki);go('kwesties');renderKwestieDetail();renderKwestieList();setTimeout(()=>{const el=document.getElementById('kwestieDetail');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},60);}
+  function closeKwestie(){KW=freshKW();renderKwestieDetail();renderKwestieList();}
+
+  function renderKwestieDetail(){
+    const host=document.getElementById('kwestieDetail');if(!host)return;
+    if(KW.sid==null){host.innerHTML='';return;}
+    const s=SESSIONS[KW.sid],k=s.kwesties[KW.ki];
+    const vb=k.votes.map((v,idx)=>`<span class="v${idx+1}" style="width:${v}%"></span>`).join('');
+    const alarms=k.alarm.map(a=>`<span class="tag">🔔 ${a}</span>`).join(' ');
+    const st=stageOf(k);
+
+    let statusBlock;
+    if(k.assignedTo){
+      let extra='';
+      if(st==='uitgenodigd')extra=`<button class="btn ghost sm" onclick="pageToast('Herinnering verstuurd aan ${k.assignedTo}.')">Herinnering sturen</button>`;
+      statusBlock=`<div class="row" style="margin-top:16px"><span style="font-weight:900">🔗 Gekoppeld aan ${k.assignedTo}</span><span class="spacer"></span>${stageChip(k)}${extra}</div>`;
+    } else {
+      statusBlock=`<div class="row" style="margin-top:16px;border-style:dashed"><span class="meta">Nog niet opgepakt</span><span class="spacer"></span>${stageChip(k)}</div>`;
+    }
+
+    let actions='';
+    const open=(st==='doorgestuurd'||st==='match')&&!k.assignedTo;
+    if(open){
+      let reuse='';
+      if(k.answered)reuse=`<div class="reuse"><span class="txt">✅ Al eens beantwoord door ${k.answeredBy}</span><span class="spacer"></span><button class="btn green" onclick="reuseKW()">Ja, hergebruiken</button></div>`;
+      const hasMatch=k.match&&k.match.length&&k.match[0][2]>0;
+      let known;
+      if(hasMatch){
+        const matches=k.match.map((m,idx)=>`<div class="match ${KW.sci===idx?'sel':''}" onclick="KW.sci=${idx};renderKwestieDetail()"><span class="rank">${idx+1}</span><div><div class="who">${m[0]} ${loadPill(m[0])}</div><div class="tags">${m[1]}</div></div><span class="spacer" style="flex:1"></span><span class="sc">${m[2]}%</span></div>`).join('');
+        const top=SCIENTISTS[k.match[0][0]];
+        const note=(top&&top.level==='red')?`<div class="load-note">⚠ Je beste match is overvraagd — overweeg de tweede, of stuur 'm tóch als het onderwerp niemand anders past.</div>`:'';
+        known=`${matches}${note}<div style="margin-top:12px;text-align:right"><button class="btn pri" onclick="startCompose('${KW.sid}',${KW.ki},${KW.sci})">Koppel &amp; bundel →</button></div>`;
+      } else {
+        known=`<div style="color:var(--ink-soft);font-size:13px;font-weight:700;padding:6px 2px">Geen bekende expert in je panel past hier goed. Zoek er een op internet →</div>`;
+      }
+      actions=`${reuse}
+        <div class="eyebrow" style="margin-top:20px">Oppakken · koppel aan bekende expert</div>${known}
+        <div class="eyebrow" style="margin-top:20px">Of · nieuwe expert zoeken via AI</div>${renderWebSection()}`;
+    } else if(st==='uitgenodigd'){
+      actions=`<div class="toast" style="margin-top:16px;margin-bottom:0">✓ Uitnodiging verstuurd — wacht op antwoord van ${k.assignedTo}.</div>`;
+    } else if(st==='beantwoord'||st==='teruggekoppeld'){
+      actions=`<div class="toast" style="margin-top:16px;margin-bottom:0">✓ Antwoord binnen via ${k.assignedTo} — staat klaar in de sessie voor Les 3.</div>`;
+    } else if(st==='gekoppeld'){
+      actions=`<div style="margin-top:16px" class="row"><span class="meta">Gekoppeld, nog niet uitgenodigd.</span><span class="spacer"></span><button class="btn pri sm" onclick="pageToast('Uitnodiging verstuurd aan ${k.assignedTo}.')">Verstuur uitnodiging</button></div>`;
+    }
+
+    host.innerHTML=`<div class="panel mt" style="border-color:rgba(181,148,247,.5)">
+      <div class="panel-h"><h2>Kwestie in detail</h2><span style="display:flex;gap:12px;align-items:center"><span class="chip ${s.les3chip}">Les 3 · ${s.les3}</span><button class="modal-x" onclick="closeKwestie()">✕</button></span></div>
+      <div class="quote">"${k.claim}."</div>
+      <div class="afz">${s.cls} · afzender ${k.afz}</div>
+      <div class="votewrap"><div style="font-size:11.5px;font-weight:900;color:var(--ink-soft);margin-bottom:7px">Klasstemming — ${s.cls.split(' · ')[0]} (${k.n} stemmen)</div><div class="votebar">${vb}</div><div class="votelabels"><span>grote onzin</span><span>neutraal</span><span>klopt helemaal</span></div></div>
+      <div style="margin-top:16px;display:flex;gap:7px;flex-wrap:wrap">${alarms}</div>
+      ${statusBlock}
+      ${actions}
+    </div>`;
+  }
+
+  function reuseKW(){const s=SESSIONS[KW.sid],k=s.kwesties[KW.ki];k.stage='teruggekoppeld';k.assignedTo=k.answeredBy;s.have=Math.min(s.promise,s.have+1);pageToast('Antwoord hergebruikt en teruggekoppeld naar de sessie.');renderPipeline();renderKwestieList();renderKwestieDetail();}
+  /* --- LIVE: invalshoeken + echte experts van het web (naar VHL-model) --- */
+  const AI_MODEL="claude-sonnet-4-6";
+  async function claudeJSON(system,user){
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:AI_MODEL,max_tokens:1000,system,messages:[{role:"user",content:user}]})});
+    const data=await res.json();
+    const text=(data.content||[]).map(b=>b.text||"").join("");
+    const m=text.match(/\[[\s\S]*\]/);
+    if(!m)return [];
+    try{return JSON.parse(m[0]);}catch{return [];}
+  }
+  async function brainstormAngles(claim,avoid){
+    const system=`Je bedenkt invalshoeken voor welke soort wetenschapper of expert een bewering kritisch zou kunnen beoordelen voor scholieren. Denk breed en creatief: dezelfde bewering kan vaak door heel verschillende vakgebieden beoordeeld worden (bijvoorbeeld een bioloog \u00e9n een filosoof). Geef 6 verschillende invalshoeken terug als JSON array. Elk object heeft:\n- angle: kort type expert (bijv. "epidemioloog", "sterrenkundige")\n- searchQuery: gerichte Engelstalige zoekterm om zo iemand te vinden aan een Nederlandse universiteit of kennisinstelling (bijv. "epidemiologist vaccine safety Netherlands university")\n- why: \u00e9\u00e9n zin waarom deze invalshoek relevant is om deze bewering te beoordelen\nAntwoord ALLEEN met de JSON array.`;
+    const user=`Bewering: "${claim}"`+((avoid&&avoid.length)?`\n\nVermijd deze eerder genoemde invalshoeken, kies andere: ${avoid.join(", ")}`:"");
+    return await claudeJSON(system,user);
+  }
+  async function searchExpertForAngle(angle,exclude){
+    const exStr=(exclude&&exclude.length)?`\n\nBELANGRIJK: zoek NIET naar deze al getoonde personen, vind iemand anders: ${exclude.join(", ")}.`:"";
+    const system=`Je zoekt \u00e9\u00e9n echte, bestaande wetenschapper of expert verbonden aan een Nederlandse universiteit of kennisinstelling (universiteiten, UMC's, RIVM, Naturalis, KNAW-instituten, hogescholen).\n\nWerkwijze:\n1. Probeer meerdere zoekopdrachten \u2014 begin breed, dan specifieker per instelling.\n2. Zoek ook direct op instituut-websites (universiteitleiden.nl, uu.nl, vu.nl, rivm.nl, naturalis.nl, enz.).\n3. Iemand telt als gevonden zodra naam + instelling online bevestigd staan.\n4. Verzin NOOIT namen \u2014 alleen echte mensen die je online hebt gevonden. Als je niemand kunt bevestigen, geef name: null.${exStr}\n\nGeef je antwoord als JSON object met:\n- name: volledige naam (of null als echt niemand gevonden)\n- title: functietitel\n- institution: naam van de instelling\n- department: afdeling (mag leeg)\n- profileUrl: echte URL waar je ze vond\n- reason: waarom zij de bewering kunnen beoordelen (max 1 zin)\nAntwoord ALLEEN met het JSON object.`;
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:AI_MODEL,max_tokens:900,tools:[{type:"web_search_20250305",name:"web_search"}],system,messages:[{role:"user",content:`Vakgebied: ${angle.angle}\nWaarom relevant: ${angle.why||""}\nProbeer o.a. deze zoekopdracht: ${angle.searchQuery||angle.angle}`}]})});
+    if(!res.ok)return null;
+    const data=await res.json();
+    const text=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+    const m=text.match(/\{[\s\S]*\}/);
+    if(!m)return null;
+    try{const o=JSON.parse(m[0]);if(!o.name)return null;return {...o,angle:angle.angle,why:angle.why,verified:true,profileUrl:o.profileUrl||("https://www.google.com/search?q="+encodeURIComponent((o.name||"")+" "+(o.institution||"")))};}catch{return null;}
+  }
+  async function startAngleSearch(){
+    const k=SESSIONS[KW.sid].kwesties[KW.ki];
+    KW.web='brainstorm';KW.angles=[];KW.aStatus={};KW.aExpert={};KW.aExcluded={};KW.webErr='';renderKwestieDetail();
+    try{const angles=await brainstormAngles(k.claim);if(!angles.length){KW.web='error';KW.webErr='Kon geen invalshoeken bedenken \u2014 probeer opnieuw.';}else{KW.angles=angles;KW.web='angles';}}
+    catch(e){KW.web='error';KW.webErr='Live zoeken lukte niet. Dit werkt als je dit als artefact in Claude draait (met internettoegang).';}
+    renderKwestieDetail();
+  }
+  async function newAngles(){
+    const k=SESSIONS[KW.sid].kwesties[KW.ki];const avoid=KW.angles.map(a=>a.angle);
+    KW.web='brainstorm';KW.aStatus={};KW.aExpert={};KW.aExcluded={};renderKwestieDetail();
+    try{const angles=await brainstormAngles(k.claim,avoid);KW.angles=angles.length?angles:KW.angles;KW.web='angles';}
+    catch(e){KW.web='error';KW.webErr='Live zoeken lukte niet.';}
+    renderKwestieDetail();
+  }
+  async function searchAngle(i){
+    KW.aStatus[i]='searching';renderKwestieDetail();
+    try{const ex=await searchExpertForAngle(KW.angles[i]);if(ex){KW.aExpert[i]=ex;KW.aStatus[i]='found';}else{KW.aStatus[i]='notfound';}}
+    catch(e){KW.aStatus[i]='notfound';}
+    renderKwestieDetail();
+  }
+  async function otherExpert(i){
+    KW.aExcluded=KW.aExcluded||{};if(KW.aExpert[i])KW.aExcluded[i]=[...(KW.aExcluded[i]||[]),KW.aExpert[i].name];
+    KW.aStatus[i]='searching';renderKwestieDetail();
+    try{const ex=await searchExpertForAngle(KW.angles[i],KW.aExcluded[i]);if(ex){KW.aExpert[i]=ex;KW.aStatus[i]='found';}else{KW.aStatus[i]='notfound';}}
+    catch(e){KW.aStatus[i]='notfound';}
+    renderKwestieDetail();
+  }
+  function chooseExpert(i){startComposeExpert(KW.sid,KW.ki,KW.aExpert[i]);}
+  function saveKnownExpert(i){pageToast(KW.aExpert[i].name+' opgeslagen in je panel \u2014 voortaan als bekende expert.');}
+  function renderWebSection(){
+    if(KW.web==='idle')return `<button class="btn pri" onclick="startAngleSearch()">\ud83d\udd0d Zoek nieuwe experts via AI</button><div style="font-size:12px;color:var(--ink-faint);font-weight:700;margin-top:8px">Zoekt live op internet: de AI bedenkt invalshoeken en zoekt per hoek een bestaande, verifieerbare wetenschapper \u2014 niets uit een vaste lijst.</div>`;
+    if(KW.web==='brainstorm')return `<div style="color:var(--purple);font-weight:800;font-size:13px;padding:10px 0"><span class="spin">\u27f3</span> Invalshoeken bedenken\u2026</div>`;
+    if(KW.web==='error')return `<div style="color:var(--red);font-weight:800;font-size:13px;padding:6px 0">${KW.webErr||'Er ging iets mis.'}</div><button class="btn ghost sm" onclick="startAngleSearch()">Opnieuw proberen</button>`;
+    const grid=KW.angles.map((a,i)=>{
+      const st=KW.aStatus[i]||'idle',ex=KW.aExpert[i];
+      const ico=st==='searching'?'<span class="spin">\u27f3</span>':st==='found'?'\u2713':st==='notfound'?'\u2013':'\u25cb';
+      const clickable=(st==='idle'||st==='notfound');
+      const inner=st==='found'&&ex?`<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:7px"><div style="font-size:11px;color:var(--green);font-weight:700">${ex.name} \u00b7 ${ex.institution||''}</div><span class="ld ld-green" style="cursor:pointer" onclick="event.stopPropagation();otherExpert(${i})">\ud83d\udd01 andere</span></div>`
+        :st==='searching'?`<div style="font-size:11px;color:var(--purple);margin-top:6px"><span class="spin">\u27f3</span> op het web zoeken & verifi\u00ebren\u2026</div>`
+        :st==='notfound'?`<div style="font-size:11px;color:var(--ink-faint);margin-top:6px">geen expert gevonden \u00b7 klik om opnieuw te zoeken</div>`
+        :`<div style="font-size:11px;color:var(--amber);opacity:.85;margin-top:6px">klik om te zoeken \u2192</div>`;
+      return `<button class="angle-btn ${clickable?'idle':st}" onclick="${clickable?`searchAngle(${i})`:''}"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:12px;color:${st==='found'?'var(--green)':'var(--ink-soft)'}">${ico}</span><span style="font-weight:900;font-size:12.5px">${a.angle}</span></div><div style="font-size:11px;color:var(--ink-faint);font-weight:600;line-height:1.4">${a.why||''}</div>${inner}</button>`;
+    }).join('');
+    const found=KW.angles.map((a,i)=>({i,ex:KW.aExpert[i]})).filter(x=>KW.aStatus[x.i]==='found'&&x.ex);
+    const foundHTML=found.length?`<div class="eyebrow" style="color:var(--green);margin-top:20px">\u2713 Gevonden op het web \u00b7 kies om uit te nodigen</div>${found.map(({ex,i})=>`
+      <div class="cand-row"><span class="cav">\ud83c\udf10</span>
+        <div style="flex:1;min-width:200px"><div class="cname">${ex.name}</div><div class="cfield">${ex.title||''}${ex.institution?' \u00b7 '+ex.institution:''}${ex.department?' \u00b7 '+ex.department:''}</div><div class="cby" style="font-style:italic;color:var(--ink-soft);margin-top:3px">"${ex.reason||''}"</div><div style="font-size:11px;color:var(--green);font-weight:800;margin-top:5px">\u2713 gevonden op het web \u00b7 invalshoek: ${ex.angle}</div></div>
+        <span class="spacer"></span>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch">
+          <a href="${ex.profileUrl}" target="_blank" rel="noopener" style="font-size:11.5px;font-weight:800;color:var(--blue);text-decoration:none;text-align:center;padding:2px">Bekijk profiel \u2197</a>
+          <button class="btn pri sm" onclick="chooseExpert(${i})">Kies & nodig uit \u2192</button>
+          <button class="btn ghost sm" onclick="saveKnownExpert(${i})">\ud83d\udcbe Opslaan in panel</button>
+        </div>
+      </div>`).join('')}`:'';
+    return `<div class="angle-grid">${grid}</div><div style="margin-top:8px;text-align:right"><button class="btn ghost sm" onclick="newAngles()">\ud83d\udca1 Nieuwe invalshoeken</button></div>${foundHTML}<p class="caption">Invalshoeken \u00e9n experts worden live door de AI bedacht en op het web opgezocht; de instructie is nadrukkelijk om nooit namen te verzinnen. Klik "Bekijk profiel" om te controleren. (Werkt wanneer dit als artefact in Claude draait, met internettoegang.)</p>`;
+  }
+
+  /* ================= SESSIE PAGE ================= */
+  let cur={sid:null,ki:null,sci:0,flash:null};
+  function openSession(id){cur={sid:id,ki:null,sci:0,flash:null};renderSession();showView('sessie');setNavActive('klassen');const s=SESSIONS[id];title.textContent=s.cls;sub.textContent='Alle inzendingen van deze klas · koppel en verstuur.';}
+  function statusChipSess(k){
+    if(stageOf(k)==='uitgenodigd')return '<span class="chip blue">uitgenodigd</span>';
+    if(stageOf(k)==='teruggekoppeld')return '<span class="chip green">teruggekoppeld</span>';
+    if(stageOf(k)==='gekoppeld')return '<span class="chip blue">gekoppeld</span>';
+    if(stageOf(k)==='beantwoord')return '<span class="chip green">beantwoord</span>';
+    if(k.answered)return '<span class="chip green">al beantwoord</span>';
+    return '<span class="chip grey">te koppelen</span>';
+  }
+  function renderSession(){
+    const s=SESSIONS[cur.sid];
+    const favs=s.kwesties.map((k,i)=>({k,i})).filter(x=>x.k.fav);
+    const rest=s.kwesties.map((k,i)=>({k,i})).filter(x=>!x.k.fav);
+    const item=({k,i})=>`<div class="kw-item ${cur.ki===i?'sel':''}" onclick="selectKwestie(${i})"><span class="star">${k.fav?'⭐':'·'}</span><div><div class="kw-claim">${k.claim}</div><div class="kw-afz">afzender · ${k.afz}</div></div><span class="spacer"></span>${k.fav?`<span class="chip amber">${k.favType}</span>`:''}${statusChipSess(k)}<span class="chev" style="color:var(--ink-faint);font-weight:900">›</span></div>`;
+    const flash=cur.flash?`<div class="toast">✓ ${cur.flash}</div>`:'';
+    document.getElementById('sessieBody').innerHTML=`
+      ${flash}
+      <div class="sess-head"><div><div class="sh-cls">${s.cls}</div><div class="sh-meta">Les 2 gehad · ${s.kwesties.length} inzendingen · ${favs.length} geselecteerd</div></div><div class="sh-right"><span class="chip ${s.les3chip}">Les 3 · ${s.les3}</span><span class="promise">${pipHTML(s.have,s.promise)} belofte</span></div></div>
+      <div class="grid g2-wide">
+        <div class="panel"><div class="kw-group fav">⭐ Door de klas geselecteerd</div>${favs.map(item).join('')||'<div style="color:var(--ink-faint);font-size:13px;font-weight:700;padding:6px 2px">Nog niets geselecteerd.</div>'}<div class="kw-group" style="margin-top:20px">Overige inzendingen (${rest.length})</div>${rest.map(item).join('')}</div>
+        <div id="detailPane"><div class="panel"><div class="detail-empty"><div class="de-ico">👈</div><div class="de-t">Selecteer een kwestie om te koppelen aan een wetenschapper.</div></div></div></div>
+      </div>`;
+    cur.flash=null;
+  }
+  function selectKwestie(i){cur.ki=i;cur.sci=0;renderSession();renderDetail();}
+  function renderDetail(){
+    const s=SESSIONS[cur.sid],k=s.kwesties[cur.ki];
+    const vb=k.votes.map((v,idx)=>`<span class="v${idx+1}" style="width:${v}%"></span>`).join('');
+    const alarms=k.alarm.map(a=>`<span class="tag">🔔 ${a}</span>`).join(' ');const st=stageOf(k);
+    let action;
+    if(k.assignedTo&&st!=='doorgestuurd'&&st!=='match'){action=`<div class="row" style="margin-top:16px"><span style="font-weight:900">🔗 ${k.assignedTo}</span><span class="spacer"></span>${stageChip(k)}</div>`;}
+    else if(k.answered){action=`<div class="reuse"><span class="txt">✅ Al eens beantwoord door ${k.answeredBy}</span><span class="spacer"></span><button class="btn green" onclick="reuseSess()">Ja, hergebruiken</button><button class="btn ghost" onclick="renderDetail()">Nee, opnieuw</button></div>`;}
+    else{
+      const hasMatch=k.match&&k.match.length&&k.match[0][2]>0;
+      if(!hasMatch){action=`<div style="margin-top:16px" class="row risk"><span class="meta">Geen bekende match — pak 'm op via de Kwesties-pagina (zoek expert op internet).</span><span class="spacer"></span><button class="btn pri" onclick="openKwestie('${cur.sid}',${cur.ki})">Openen</button></div>`;}
+      else{
+        const matches=k.match.map((m,idx)=>`<div class="match ${cur.sci===idx?'sel':''}" onclick="cur.sci=${idx};renderDetail()"><span class="rank">${idx+1}</span><div><div class="who">${m[0]} ${loadPill(m[0])}</div><div class="tags">${m[1]}</div></div><span class="spacer" style="flex:1"></span><span class="sc">${m[2]}%</span></div>`).join('');
+        const top=SCIENTISTS[k.match[0][0]];const note=(top&&top.level==='red')?`<div class="load-note">⚠ Je beste match is overvraagd — overweeg de tweede.</div>`:'';
+        action=`<div style="margin-top:14px">${matches}</div>${note}<div class="ai-foot"><span class="promise">${pipHTML(s.have,s.promise)} belofte</span><button class="btn pri" onclick="startCompose()">Koppel &amp; bundel →</button></div>`;
+      }
+    }
+    document.getElementById('detailPane').innerHTML=`<div class="panel"><div class="panel-h"><h2>Koppelen</h2><span class="chip ${s.les3chip}">Les 3 · ${s.les3}</span></div><div class="quote">"${k.claim}."</div><div class="afz">afzender · ${k.afz}</div><div class="votewrap"><div style="font-size:11.5px;font-weight:900;color:var(--ink-soft);margin-bottom:7px">Klasstemming — ${s.cls.split(' · ')[0]} (${k.n} stemmen)</div><div class="votebar">${vb}</div><div class="votelabels"><span>grote onzin</span><span>neutraal</span><span>klopt helemaal</span></div></div><div style="margin-top:16px;display:flex;gap:7px;flex-wrap:wrap">${alarms}</div>${action}</div>`;
+  }
+  function reuseSess(){const s=SESSIONS[cur.sid],k=s.kwesties[cur.ki];k.stage='teruggekoppeld';k.assignedTo=k.answeredBy;s.have=Math.min(s.promise,s.have+1);cur.flash='Bestaand antwoord hergebruikt en teruggekoppeld naar de sessie.';renderSession();cur.ki=s.kwesties.indexOf(k);renderSession();renderDetail();}
+
+  /* ================= COMPOSE WIZARD ================= */
+  let mailTpl={
+    intro:`Beste {{NAAM}},<br><br>Voor <b>Zin of Onzin?</b> staan er een paar kwesties voor je klaar. Leerlingen hebben deze stellingen zelf verzameld en er in de klas over gestemd — nu zijn we heel benieuwd naar jouw oordeel (waar, onwaar of genuanceerd), met een korte toelichting op video.`,
+    outro:`Via de knop hieronder kom je in je persoonlijke omgeving. Daar zie je per kwestie hoe de klas stemde, en kun je je antwoord opnemen. Elk antwoord komt automatisch terug bij de juiste klas.<br><br>Alvast hartelijk dank!<br>Friso`
+  };
+  let mailTplNew={
+    intro:`Beste {{NAAM}},<br><br>Ik ben Friso, en ik leid het project <b>Zin of Onzin?</b> — een programma waarin middelbare scholieren leren informatie kritisch te wegen. Leerlingen verzamelen zelf "onzin" die ze tegenkomen en stemmen er klassikaal over; twijfelgevallen leggen we voor aan een panel van wetenschappers. Ik kwam je profiel tegen en je expertise past precies bij een vraag die net binnenkwam.`,
+    outro:`Zou je er kort naar willen kijken? Via de knop hieronder kom je in een persoonlijke omgeving waar je de vraag ziet, de klasstemming, en je oordeel op video kunt inspreken — het kost hooguit een paar minuten, en er is geen account voor nodig.<br><br>Hartelijk dank alvast!<br>Friso`
+  };
+  function curTpl(){return compose.mode==='werf'?mailTplWerf:((compose.sci&&compose.sci.external)?mailTplNew:mailTpl);}
+  let compose={sci:null,bundle:[],step:1};
+  function startComposeExpert(sid,ki,expert){compose={sci:{name:expert.name,tags:expert.title,title:expert.title,institution:expert.institution,department:expert.department||'',external:true,profileUrl:expert.profileUrl},bundle:[{sid,ki}],step:1,cands:[],candLoading:true,candErr:''};document.getElementById('composeModal').classList.add('open');renderCompose();loadExternalCandidates();}
+  async function matchKwestiesToExpert(expert,list){
+    const system=`Je bepaalt welke door scholieren ingezonden beweringen passen bij de expertise van een expert. Geef een JSON array met de indices (0-based) van de beweringen die goed passen, elk met een korte reden (max 8 woorden). Formaat: [{"index":0,"reason":"..."}]. Neem alleen echt passende op. Antwoord ALLEEN met de JSON array.`;
+    const prompt=`Expert: ${expert.name}, ${expert.title||''}${expert.institution?' bij '+expert.institution:''}${expert.department?' ('+expert.department+')':''}\n\nBeweringen:\n${list.map((x,i)=>`${i}: ${SESSIONS[x.sid].kwesties[x.ki].claim}`).join("\n")}`;
+    return await claudeJSON(system,prompt);
+  }
+  async function loadExternalCandidates(){
+    const prim=compose.bundle[0];const open=[];
+    Object.keys(SESSIONS).forEach(sid=>SESSIONS[sid].kwesties.forEach((k,ki)=>{
+      if(sid===prim.sid&&ki===prim.ki)return;
+      if(k.answered||k.assignedTo||!['doorgestuurd','match'].includes(stageOf(k)))return;
+      open.push({sid,ki});
+    }));
+    if(!open.length){compose.cands=[];compose.candLoading=false;if(compose.step===1)renderCompose();return;}
+    try{const matches=await matchKwestiesToExpert(compose.sci,open);compose.cands=(matches||[]).filter(m=>open[m.index]).map(m=>({...open[m.index],reason:m.reason}));}
+    catch(e){compose.cands=[];}
+    compose.candLoading=false;if(compose.step===1)renderCompose();
+  }
+  function verdictButtons(sid,ki){
+    const base='https://zinofonzin.nl/antwoord?k='+sid+'-'+ki+'&oordeel=';
+    const b=(v,label,color)=>`<a href="${base}${v}" style="display:inline-block;padding:6px 12px;border-radius:6px;background:${color};color:#fff;text-decoration:none;font-weight:bold;font-size:12px;margin:0 6px 4px 0">${label}</a>`;
+    return `<div style="margin:6px 0 14px 0">${b('zin','\ud83d\udc4d Zin','#2a9d5c')}${b('nuance','\ud83e\udd14 Genuanceerd','#e8a020')}${b('onzin','\ud83d\udc4e Onzin','#e8431a')}</div>`;
+  }
+  function bundleListHTML(){
+    return compose.bundle.map(b=>{const k=SESSIONS[b.sid].kwesties[b.ki];return `<div style="margin-bottom:12px"><div style="font-weight:bold">"${k.claim}" <span style="font-weight:normal;color:#888">\u2014 ${SESSIONS[b.sid].cls.split(' \u00b7 ')[0]}</span></div>${verdictButtons(b.sid,b.ki)}</div>`;}).join('');
+  }
+  function quickVerdictNote(){
+    return `<div style="background:#f0f9f4;border:1px solid #cbead8;border-radius:8px;padding:10px 12px;font-size:13px;color:#2a6b45;margin:4px 0 14px">\ud83d\udca1 \u00c9\u00e9n klik op een knop hierboven legt je eerste oordeel al vast. Geen tijd voor een video? Dan hebben we t\u00f3ch je expert-oordeel \u2014 op de pagina kun je het desgewenst kort toelichten.</div>`;
+  }
+  function getCandidates(sciName,exSid,exKi){
+    const out=[];
+    Object.keys(SESSIONS).forEach(sid=>{SESSIONS[sid].kwesties.forEach((k,ki)=>{
+      if(sid===exSid&&ki===exKi)return;
+      if(k.answered||k.assignedTo||!['doorgestuurd','match'].includes(stageOf(k)))return;
+      const m=(k.match||[]).find(x=>x[0]===sciName);
+      if(m&&m[2]>0)out.push({sid,ki,score:m[2]});
+    });});
+    return out.sort((a,b)=>b.score-a.score);
+  }
+  const inBundle=(sid,ki)=>compose.bundle.some(b=>b.sid===sid&&b.ki===ki);
+  function startCompose(sid,ki,sciIdx){
+    if(sid===undefined){sid=cur.sid;ki=cur.ki;sciIdx=cur.sci;}
+    const k=SESSIONS[sid].kwesties[ki];const m=k.match[sciIdx];
+    compose={sci:{name:m[0],tags:m[1]},bundle:[{sid,ki}],step:1};
+    document.getElementById('composeModal').classList.add('open');renderCompose();
+  }
+  function closeCompose(){document.getElementById('composeModal').classList.remove('open');}
+  function composeStep(n){compose.step=n;renderCompose();}
+  function toggleCand(sid,ki){if(inBundle(sid,ki))compose.bundle=compose.bundle.filter(b=>!(b.sid===sid&&b.ki===ki));else compose.bundle.push({sid,ki});renderCompose();}
+  function renderCompose(){
+    document.getElementById('st1').innerHTML='<span class="num">1</span> Bundelen';
+    document.getElementById('st2').style.display='';
+    const _sep=document.getElementById('stSep');if(_sep)_sep.style.display='';
+    if(compose.mode==='werf'){renderWerfCompose();return;}
+    document.getElementById('st1').classList.toggle('on',compose.step>=1);
+    document.getElementById('st2').classList.toggle('on',compose.step>=2);
+    const body=document.getElementById('composeBody'),foot=document.getElementById('composeFoot'),prim=compose.bundle[0];
+    if(compose.step===1){
+      const pk=SESSIONS[prim.sid].kwesties[prim.ki];
+      const isExt=!!(compose.sci&&compose.sci.external);
+      const loading=isExt&&compose.candLoading;
+      const cands=isExt?(compose.cands||[]):getCandidates(compose.sci.name,prim.sid,prim.ki);
+      const candItem=c=>{const k=SESSIONS[c.sid].kwesties[c.ki];const on=inBundle(c.sid,c.ki);const meta=c.reason?`<span style="color:var(--purple);font-size:11px;font-weight:700;max-width:150px;text-align:right">${c.reason}</span>`:`<span class="csc">${c.score}%</span>`;return `<div class="cand ${on?'on':''}" onclick="toggleCand('${c.sid}',${c.ki})"><span class="cbox">\u2713</span><div><div class="cl">${k.claim}</div><div class="csub">${SESSIONS[c.sid].cls.split(' \u00b7 ')[0]} \u00b7 afzender ${k.afz}</div></div><span style="flex:1"></span>${meta}</div>`;};
+      const candHTML=loading?`<div style="color:var(--purple);font-weight:800;font-size:13px;padding:10px 2px"><span class="spin">\u27f3</span> Andere passende kwesties zoeken\u2026</div>`:(cands.length?cands.map(candItem).join(''):`<div style="color:var(--ink-faint);font-size:13px;font-weight:700;padding:8px 2px">Geen andere passende open kwesties gevonden. Je stuurt deze ene.</div>`);
+      const src=isExt?'De AI matcht deze net gevonden expert live tegen \u00e1lle openstaande kwesties':'De AI zocht in \u00e1lle openstaande kwesties';
+      body.innerHTML=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px"><span style="font-size:16px;font-weight:900">Bundel voor ${compose.sci.name}</span>${loadPill(compose.sci.name)}${isExt?'<span class="chip green">nieuw \u00b7 van het web</span>':''}</div><div style="color:var(--ink-soft);font-size:13px;font-weight:600;margin-bottom:18px">E\u00e9n mail met ongeveer 3 kwesties werkt het prettigst. ${src} \u2014 ook van andere klassen \u2014 naar wat nog meer bij ${compose.sci.name} past. Elk antwoord komt terug in de eigen sessie.</div><div class="eyebrow">Net gekoppeld</div><div class="cand locked"><span class="cbox">\u2713</span><div><div class="cl">${pk.claim}</div><div class="csub">${SESSIONS[prim.sid].cls.split(' \u00b7 ')[0]} \u00b7 afzender ${pk.afz}</div></div></div><div class="eyebrow" style="margin-top:18px">Ook passend bij ${compose.sci.name} \u2014 vink aan om te bundelen</div>${candHTML}`;
+      foot.innerHTML=`<span style="font-size:12.5px;font-weight:800;color:var(--ink-soft)">${compose.bundle.length} kwesties \u00b7 aanbevolen ~3</span><button class="btn pri" onclick="composeStep(2)">Volgende \u2192 Mail opstellen</button>`;
+    } else {
+      const extBadge=compose.sci.external?`<span class="chip green" style="margin-left:6px">nieuw \u00b7 eerste contact</span>`:'';
+      body.innerHTML=`<div class="eyebrow">Mail aan ${compose.sci.name}${extBadge} \u00b7 klik in de tekst om aan te passen</div><div class="mailbody"><div contenteditable="true" id="mIntro">${curTpl().intro.split('{{NAAM}}').join(compose.sci.name)}</div><div style="font-weight:700;margin:14px 0 10px">${compose.sci.external?'De bewering:':'De beweringen:'}</div>${bundleListHTML()}${quickVerdictNote()}<div contenteditable="true" id="mOutro">${curTpl().outro}</div><a class="mail-link" href="#" onclick="return false">Open de antwoordpagina \u2192</a></div>`;
+      foot.innerHTML=`<button class="btn ghost" onclick="composeStep(1)">‹ Terug</button><span class="ctoast" id="ctoast"></span><span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" onclick="saveTemplate()">Sjabloon opslaan</button><button class="btn ghost" onclick="copyRich()">Kopieer rich text</button><button class="btn pri" onclick="sendBundle()">Verstuur mail</button></span>`;
+    }
+  }
+  function saveTemplate(){const T=curTpl();let intro=document.getElementById('mIntro').innerHTML.split(compose.sci.name).join('{{NAAM}}');if(compose.mode==='werf'&&compose.werfTheme)intro=intro.split(compose.werfTheme).join('{{THEMA}}');T.intro=intro;T.outro=document.getElementById('mOutro').innerHTML;const t=document.getElementById('ctoast');t.textContent='Sjabloon opgeslagen ✓';setTimeout(()=>t.textContent='',2500);}
+  function buildMailHTML(){
+    const intro=document.getElementById('mIntro')?document.getElementById('mIntro').innerHTML:(compose.mode==='werf'?curTpl().intro.split('{{NAAM}}').join(compose.sci.name).split('{{THEMA}}').join(compose.werfTheme||''):curTpl().intro.split('{{NAAM}}').join(compose.sci.name));
+    const outro=document.getElementById('mOutro')?document.getElementById('mOutro').innerHTML:curTpl().outro;
+    if(compose.mode==='werf')return `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#1a1a2e">${intro}<br><br>${outro}<p><a href="https://zinofonzin.nl/panel" style="color:#7B5FE0;font-weight:bold">Meld je vrijblijvend aan →</a></p></div>`;
+    return `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#1a1a2e">${intro}<div style="font-weight:bold;margin-top:12px;margin-bottom:8px">${compose.sci.external?'De bewering:':'De beweringen:'}</div>${bundleListHTML()}${quickVerdictNote()}${outro}<p><a href="https://zinofonzin.nl/antwoord" style="color:#7B5FE0;font-weight:bold">Open de antwoordpagina \u2192</a></p></div>`;
+  }
+  async function copyRich(){
+    const html=buildMailHTML(),plain=html.replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim(),t=document.getElementById('ctoast');
+    try{await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([plain],{type:'text/plain'})})]);t.textContent='Rich text gekopieerd ✓';}
+    catch(e){try{const ta=document.createElement('textarea');ta.value=plain;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();t.textContent='Gekopieerd (platte tekst) ✓';}catch(e2){t.textContent='Kopiëren lukte niet';}}
+    setTimeout(()=>t.textContent='',2500);
+  }
+  function sendBundle(){
+    compose.bundle.forEach(b=>{const k=SESSIONS[b.sid].kwesties[b.ki];k.stage='uitgenodigd';k.assignedTo=compose.sci.name;});
+    const n=compose.bundle.length,sci=compose.sci.name;closeCompose();
+    renderPipeline();renderKwestieList();if(KW.sid!=null)renderKwestieDetail();
+    const av=document.querySelector('.view.active');
+    if(av&&av.id==='sessie'){cur.flash=`Mail verstuurd aan ${sci} · ${n} ${n===1?'kwestie':'kwesties'} uitgenodigd.`;renderSession();}
+    else pageToast(`Mail verstuurd aan ${sci} · ${n} ${n===1?'kwestie':'kwesties'} uitgenodigd.`);
+  }
+
+  /* ================= WERVING (thema-batch, live) ================= */
+  let mailTplWerf={
+    intro:`Beste {{NAAM}},<br><br>Ik ben Friso, en ik leid <b>Zin of Onzin?</b> — een programma waarin middelbare scholieren leren informatie kritisch te wegen. We bouwen een panel van wetenschappers dat af en toe, volledig vrijblijvend, een door leerlingen ingezonden bewering beoordeelt. Jouw expertise op het gebied van {{THEMA}} past daar goed bij.`,
+    outro:`Meedoen kost weinig: je krijgt zo nu en dan een bewering voorgelegd en geeft met één klik aan of het volgens jou zin of onzin is — een korte toelichting op video mag, maar hoeft niet. Je zit nergens aan vast en bepaalt zelf of en wanneer je reageert.<br><br>Zou je willen meedoen? Via de knop hieronder lees je meer en meld je je vrijblijvend aan.<br><br>Hartelijk dank!<br>Friso`
+  };
+  let WERF={theme:'',kwesties:[],specialisms:[],specLoading:false,specErr:'',selected:[],cands:[],searchState:'idle'};
+  function kwestiesForTheme(theme){
+    const t=(theme||'').toLowerCase();const kw=allKw();let re=null;
+    if(/voeding|gezond/.test(t))re=/suiker|voeding|calorie|banaan|citroen|vet|spinazie|wortel|kauwgom|coca/;
+    else if(/ruimte|historisch|maan/.test(t))re=/maan|ruimte|nasa|1969/;
+    else if(/nepnieuws|media/.test(t))re=/nep|kettingbericht|complot|viral/;
+    else if(/ai|techniek|straling/.test(t))re=/\bai\b|5g|straling|telefoon|robot/;
+    if(!re)return kw.slice(0,6);
+    return kw.filter(x=>re.test(x.k.claim.toLowerCase()));
+  }
+  async function brainstormSpecialisms(theme,kwesties){
+    const system=`Je bedenkt welke soorten specialisten geschikt zijn om als factchecker in een panel beweringen over een bepaald thema te beoordelen. Geef 6 verschillende specialismen terug als JSON array. Elk object heeft:\n- specialism: kort type expert (bijv. "voedingswetenschapper")\n- searchQuery: gerichte Engelstalige zoekterm om zo iemand te vinden aan een Nederlandse universiteit of kennisinstelling\n- why: één zin waarom dit specialisme past bij dit thema\nAntwoord ALLEEN met de JSON array.`;
+    const user=`Thema: "${theme}"\n\nVoorbeelden van beweringen die binnenkwamen:\n${kwesties.map(x=>'- '+SESSIONS[x.sid].kwesties[x.ki].claim).join('\n')||'(nog geen voorbeelden)'}`;
+    return await claudeJSON(system,user);
+  }
+  async function openWerving(theme){
+    WERF={theme,kwesties:kwestiesForTheme(theme),specialisms:[],specLoading:true,specErr:'',selected:[],cands:[],searchState:'idle'};
+    showView('werving');setNavActive('wetenschappers');title.textContent='Werven · '+theme;sub.textContent='Zoek meerdere kandidaten voor je panel binnen dit thema.';
+    renderWerving();
+    try{const s=await brainstormSpecialisms(theme,WERF.kwesties);WERF.specialisms=s||[];if(!WERF.specialisms.length)WERF.specErr='Geen specialismen gevonden — probeer opnieuw.';}
+    catch(e){WERF.specErr='Live zoeken lukte niet. Werkt wanneer dit als artefact in Claude draait.';}
+    WERF.specLoading=false;renderWerving();
+  }
+  function toggleSpec(i){const p=WERF.selected.indexOf(i);if(p>=0)WERF.selected.splice(p,1);else WERF.selected.push(i);renderWerving();}
+  async function doWerfSearch(){
+    const sel=WERF.selected.map(i=>WERF.specialisms[i]).filter(Boolean);
+    if(!sel.length)return;
+    WERF.searchState='searching';WERF.cands=[];renderWerving();
+    for(const s of sel){
+      try{const ex=await searchExpertForAngle({angle:s.specialism,why:s.why,searchQuery:s.searchQuery});if(ex){ex.specialism=s.specialism;WERF.cands.push(ex);renderWerving();}}catch(e){}
+    }
+    WERF.searchState='done';renderWerving();
+  }
+  function openWerfMail(idx){
+    const c=WERF.cands[idx];
+    compose={sci:{name:c.name,tags:c.title,title:c.title,institution:c.institution,external:true,profileUrl:c.profileUrl},mode:'werf',werfTheme:WERF.theme,bundle:[],step:1};
+    document.getElementById('composeModal').classList.add('open');renderCompose();
+  }
+  function renderWerfCompose(){
+    document.getElementById('st1').innerHTML='<span class="num">✉</span> Panel-uitnodiging';
+    document.getElementById('st1').classList.add('on');
+    document.getElementById('st2').style.display='none';
+    const sep=document.getElementById('stSep');if(sep)sep.style.display='none';
+    const intro=curTpl().intro.split('{{NAAM}}').join(compose.sci.name).split('{{THEMA}}').join(compose.werfTheme||'jouw vakgebied');
+    document.getElementById('composeBody').innerHTML=`<div class="eyebrow">Panel-uitnodiging aan ${compose.sci.name} · vrijblijvend meedoen · klik in de tekst om aan te passen</div><div class="mailbody"><div contenteditable="true" id="mIntro">${intro}</div><div contenteditable="true" id="mOutro" style="margin-top:12px">${curTpl().outro}</div><a class="mail-link" href="#" onclick="return false">Meld je vrijblijvend aan →</a></div>`;
+    document.getElementById('composeFoot').innerHTML=`<span class="ctoast" id="ctoast"></span><span style="display:flex;gap:8px;flex-wrap:wrap;margin-left:auto"><button class="btn ghost" onclick="saveTemplate()">Sjabloon opslaan</button><button class="btn ghost" onclick="copyRich()">Kopieer rich text</button><button class="btn pri" onclick="sendWerf()">Verstuur uitnodiging</button></span>`;
+  }
+  function sendWerf(){const n=compose.sci.name;closeCompose();pageToast('Panel-uitnodiging verstuurd aan '+n+' — vrijblijvend meedoen.');}
+  function renderWerving(){
+    const host=document.getElementById('wervingBody');if(!host)return;
+    const kwHTML=WERF.kwesties.length?WERF.kwesties.map(x=>{const k=x.k,s=SESSIONS[x.sid];return `<div class="row" style="padding:11px 13px"><span class="meta" style="color:var(--ink)">${k.claim}</span><span class="spacer"></span><span class="tag">${s.cls.split(' · ')[0]}</span>${stageChip(k)}</div>`;}).join(''):`<div style="color:var(--ink-faint);font-size:13px;font-weight:700;padding:6px 2px">Nog geen kwesties in dit thema.</div>`;
+    let specHTML;
+    if(WERF.specLoading)specHTML=`<div style="color:var(--purple);font-weight:800;font-size:13px;padding:10px 2px"><span class="spin">⟳</span> Specialismen bedenken…</div>`;
+    else if(WERF.specErr)specHTML=`<div style="color:var(--red);font-weight:800;font-size:13px">${WERF.specErr}</div>`;
+    else specHTML=WERF.specialisms.map((s,i)=>{const on=WERF.selected.includes(i);return `<div class="cand ${on?'on':''}" onclick="toggleSpec(${i})"><span class="cbox">✓</span><div><div class="cl">${s.specialism}</div><div class="csub">${s.why||''}</div></div></div>`;}).join('');
+    const canSearch=WERF.selected.length>0&&WERF.searchState!=='searching';
+    let candHTML='';
+    if(WERF.searchState==='searching'||WERF.cands.length){
+      candHTML=`<div class="panel mt"><div class="panel-h"><h2>🌐 Kandidaten (${WERF.cands.length})</h2>${WERF.searchState==='searching'?'<span class="chip purple"><span class="spin">⟳</span> zoeken…</span>':''}</div>`+
+        (WERF.cands.map((c,i)=>`<div class="cand-row"><span class="cav">🌐</span><div style="flex:1;min-width:200px"><div class="cname">${c.name}</div><div class="cfield">${c.title||''}${c.institution?' · '+c.institution:''}</div><div class="cby" style="font-style:italic;color:var(--ink-soft);margin-top:3px">"${c.reason||''}"</div><div style="font-size:11px;color:var(--green);font-weight:800;margin-top:5px">✓ gevonden op het web · specialisme: ${c.specialism||c.angle||''}</div></div><span class="spacer"></span><div style="display:flex;flex-direction:column;gap:6px;align-items:stretch"><a href="${c.profileUrl}" target="_blank" rel="noopener" style="font-size:11.5px;font-weight:800;color:var(--blue);text-decoration:none;text-align:center;padding:2px">Bekijk profiel ↗</a><button class="btn pri sm" onclick="openWerfMail(${i})">Nodig uit voor panel</button></div></div>`).join(''))+
+        (WERF.searchState==='done'&&!WERF.cands.length?`<div style="color:var(--ink-faint);font-size:13px;font-weight:700;padding:6px 2px">Geen kandidaten gevonden — kies andere specialismen.</div>`:'')+
+        `<p class="caption">Kandidaten worden live op het web opgezocht en geverifieerd; ze krijgen een vrijblijvende uitnodiging om aan het panel mee te doen.</p></div>`;
+    }
+    host.innerHTML=`
+      <div class="sess-head"><div><div class="sh-cls">Werven · ${WERF.theme}</div><div class="sh-meta">Vind meerdere kandidaten voor je factchecker-panel binnen dit thema</div></div></div>
+      <div class="panel"><div class="panel-h"><h2>📋 Kwesties binnen dit thema (${WERF.kwesties.length})</h2></div>${kwHTML}</div>
+      <div class="panel mt"><div class="panel-h"><h2>🧩 Welke specialisten passen hier?</h2><span class="meta" style="color:var(--ink-faint)">selecteer er een paar</span></div>${specHTML}
+        <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><span style="font-size:12.5px;font-weight:800;color:var(--ink-soft)">${WERF.selected.length} geselecteerd</span><button class="btn pri" ${canSearch?'':'disabled'} onclick="doWerfSearch()">🔍 Zoek kandidaten</button></div>
+      </div>
+      ${candHTML}`;
+  }
+
+  /* ================= WERVING + TOAST ================= */
+  function pageToast(msg){const t=document.getElementById('pageToast');t.textContent='✓ '+msg;t.classList.add('show');clearTimeout(window._pt);window._pt=setTimeout(()=>t.classList.remove('show'),3200);}
+  function inviteCandidate(el,name){el.outerHTML='<span class="chip blue">uitgenodigd ✓</span>';pageToast('Uitnodiging verstuurd aan '+name+' — met de naam van de aandrager vooraan.');}
+  function askSuggest(topic){const t=(topic&&topic.length)?('voor '+topic.replace('&amp;','&')+' '):'';pageToast('Verzoek klaargezet '+t+'— je best passende experts krijgen de vraag om een collega aan te dragen.');}
+
+  /* init */
+  renderPipeline();renderKwestieList();
+</script>
+</body>
+</html>

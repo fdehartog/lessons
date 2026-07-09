@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const PASSWORD = process.env.SITE_PASSWORD
 
-export function middleware(request: NextRequest) {
-  // Skip the login page itself
-  if (request.nextUrl.pathname === '/login') return NextResponse.next()
+export function proxy(request: NextRequest) {
+  // Skip the login page and the wetenschapper-antwoordpagina — die komt binnen via
+  // een magic-link uit de mail, zonder site-login.
+  if (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/antwoord') return NextResponse.next()
 
   // Check cookie
   const cookie = request.cookies.get('site-auth')
