@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const PASSWORD = process.env.SITE_PASSWORD
 
+const OPEN_PATHS = [
+  '/login',
+  '/api/login', // moet bereikbaar zijn zónder cookie — anders kan niemand ooit inloggen
+  '/antwoord', // wetenschapper komt binnen via magic-link uit de mail, zonder site-login
+]
+
 export function middleware(request: NextRequest) {
-  // Skip the login page and the wetenschapper-antwoordpagina — die komt binnen via
-  // een magic-link uit de mail, zonder site-login.
-  if (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/antwoord') return NextResponse.next()
+  if (OPEN_PATHS.includes(request.nextUrl.pathname)) return NextResponse.next()
 
   // Check cookie
   const cookie = request.cookies.get('site-auth')
