@@ -10,8 +10,8 @@ const supabase = createClient(
 const LESSONS = [
   {
     slug: 'herkomst',
-    lesson_number: 1,
-    alarm_bell_position: 1,
+    lesson_number: 3,
+    alarm_bell_position: 3,
     title: 'Herkomst',
     subtitle: 'Van wie komt deze informatie?',
     about: 'Niet alle bronnen zijn even betrouwbaar. In deze les leer je hoe je kunt checken wie er achter een bericht zit — en waarom dat zo belangrijk is voor kritisch denken.',
@@ -62,8 +62,8 @@ const LESSONS = [
   },
   {
     slug: 'belang',
-    lesson_number: 3,
-    alarm_bell_position: 3,
+    lesson_number: 1,
+    alarm_bell_position: 1,
     title: 'Belang',
     subtitle: 'Wil iemand iets van jou?',
     about: 'Sociale media en apps zijn vaak gratis. Maar waarom eigenlijk? In deze les ontdek je hoe bedrijven en platforms jouw aandacht, keuzes en gegevens gebruiken voor hun eigen voordeel. En hoe beïnvloeding werkt — vaak subtieler dan je denkt.',

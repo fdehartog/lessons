@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase, MOCK_USER_ID } from '@/lib/supabase'
+import OefenrondeModal from '@/components/les/OefenrondeModal'
 
 type Lesson = {
   id: string
@@ -66,6 +67,7 @@ export default function LesDetailPage() {
   const [totalCount, setTotalCount] = useState(10)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [oefenrondeOpen, setOefenrondeOpen] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -222,7 +224,7 @@ export default function LesDetailPage() {
             <h1 style={{ fontFamily: 'Nunito', fontWeight: 900, fontSize: 40, lineHeight: 1.1, letterSpacing: '-0.02em', marginBottom: 6 }}>
               {lesson.title}
             </h1>
-            <p style={{ fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 19, color: '#C5C9E8' }}>
+            <p style={{ fontFamily: 'Nunito, sans-serif', fontSize: 19, color: '#C5C9E8' }}>
               {lesson.subtitle}
             </p>
           </div>
@@ -245,7 +247,7 @@ export default function LesDetailPage() {
                   >
                     ▶
                   </button>
-                  <span style={{ fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 14, color: 'rgba(255,255,255,0.7)' }}>Klik om af te spelen</span>
+                  <span style={{ fontFamily: 'Nunito, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.7)' }}>Klik om af te spelen</span>
                 </div>
                 {/* Video controls bar */}
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -257,6 +259,22 @@ export default function LesDetailPage() {
                   <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>⛶</span>
                 </div>
               </div>
+
+              {/* Start oefenronde — primaire call-to-action, direct onder de video */}
+              <button
+                onClick={() => setOefenrondeOpen(true)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                  padding: '18px', borderRadius: 18, border: 'none', cursor: 'pointer',
+                  background: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`, color: '#0F1335',
+                  fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16.5,
+                  boxShadow: `0 8px 24px ${accentFrom}33`, transition: 'transform 0.2s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-1px)')}
+                onMouseLeave={e => (e.currentTarget.style.transform = '')}
+              >
+                🎮 Start het spel →
+              </button>
 
               {/* About */}
               <div style={{ background: '#20264F', borderRadius: 18, padding: 24 }}>
@@ -399,19 +417,32 @@ export default function LesDetailPage() {
           </div>
           <div>
             <p style={{ fontSize: 11, color: '#8B91B8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Tip van vandaag</p>
-            <p style={{ fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 13, color: '#C5C9E8', lineHeight: 1.4 }}>
+            <p style={{ fontFamily: 'Nunito, sans-serif', fontSize: 13, color: '#C5C9E8', lineHeight: 1.4 }}>
               {course?.tip_of_the_day}
             </p>
           </div>
           <div>
             <p style={{ fontSize: 11, color: '#8B91B8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Klaar om te starten?</p>
-            <p style={{ fontSize: 13, color: '#C5C9E8' }}>Bekijk eerst de video en ontdek meer!</p>
+            <p style={{ fontSize: 13, color: '#C5C9E8' }}>Bekijk de video en speel daarna het spel!</p>
           </div>
-          <button style={{ padding: '10px 20px', borderRadius: 12, fontWeight: 700, fontSize: 14, fontFamily: 'Nunito', background: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`, color: '#FFFFFF', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            Start de video ▶
+          <button
+            onClick={() => setOefenrondeOpen(true)}
+            style={{ padding: '10px 20px', borderRadius: 12, fontWeight: 700, fontSize: 14, fontFamily: 'Nunito, sans-serif', background: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`, color: '#FFFFFF', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
+          >
+            🎮 Start het spel ▶
           </button>
         </div>
       </main>
+
+      {oefenrondeOpen && (
+        <OefenrondeModal
+          lessonSlug={lesson.slug}
+          lessonTitle={lesson.title}
+          accentFrom={accentFrom}
+          accentTo={accentTo}
+          onClose={() => setOefenrondeOpen(false)}
+        />
+      )}
     </div>
   )
 }

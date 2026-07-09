@@ -209,7 +209,7 @@ export default function LesoverzichtPage() {
               </p>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 <Pill icon="🕐" label={`~${course?.total_duration_min ?? 90} minuten`} sub="totale duur" color="#B594F7" bg="rgba(181,148,247,0.12)" />
-                <Pill icon="🗳" label={`${course?.vote_rounds ?? 10} stemrondes`} sub="jouw mening telt" color="#6BCF7F" bg="rgba(107,207,127,0.12)" />
+                <Pill icon="📝" label={`${course?.vote_rounds ?? 10} oefenrondes`} sub="±10 vragen per les" color="#6BCF7F" bg="rgba(107,207,127,0.12)" />
                 <Pill icon="▶" label={`${course?.video_count ?? 10} video's`} sub="helder uitgelegd" color="#4A9EFF" bg="rgba(74,158,255,0.12)" />
               </div>
             </div>
@@ -390,8 +390,8 @@ function AlarmBellCard({ bell, completed, active, onClick }: { bell: AlarmBell; 
           </span>
           {bell.has_vote_round && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 99, fontSize: 13, fontWeight: 700, fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', background: `${bell.color_solid}22`, color: bell.color_solid }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              Stemronde
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              Oefenvragen
             </span>
           )}
         </div>
