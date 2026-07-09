@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CASUSSEN_PER_LES } from '@/lib/casussen'
 import type { CasusVerdict } from '@/lib/casussen'
 import {
@@ -29,6 +29,11 @@ const STAP_VRAAG: Record<OefenstapType, string> = {
   zekerheid: 'Hoe zeker ben je van je antwoord?',
 }
 
+// Klassikaal spel: pas als iedereen heeft gestemd, komt de uitslag. Dit simuleert die wachttijd.
+const WACHTTIJD_MS = 1800
+
+type Fase = 'vraag' | 'wachten' | 'reveal'
+
 export default function OefenrondeModal({
   lessonSlug, lessonTitle, accentFrom, accentTo, onClose, onFinished,
 }: {
@@ -44,6 +49,7 @@ export default function OefenrondeModal({
 
   const [index, setIndex] = useState(0)
   const [stapIndex, setStapIndex] = useState(0)
+  const [fase, setFase] = useState<Fase>('vraag')
   const [motiefAntwoord, setMotiefAntwoord] = useState<MotiefKey | null>(null)
   const [verdictAntwoord, setVerdictAntwoord] = useState<CasusVerdict | null>(null)
   const [zekerheidAntwoord, setZekerheidAntwoord] = useState<ZekerheidKey | null>(null)
@@ -67,28 +73,34 @@ export default function OefenrondeModal({
   const motiefCorrect = motiefAntwoord !== null && motiefAntwoord === motiefGoed
   const verdictCorrect = verdictAntwoord !== null && verdictAntwoord === verdictGoed
 
-  function kiesMotief(m: MotiefKey) {
-    if (motiefAntwoord) return
-    setMotiefAntwoord(m)
-    if (m === motiefGoed) setMotiefScore(s => s + 1)
-  }
+  // Simuleer het wachten tot de klas klaar is met stemmen, dan pas de uitslag tonen.
+  useEffect(() => {
+    if (fase !== 'wachten') return
+    const t = setTimeout(() => setFase('reveal'), WACHTTIJD_MS)
+    return () => clearTimeout(t)
+  }, [fase])
 
-  function kiesVerdict(v: CasusVerdict) {
-    if (verdictAntwoord) return
-    setVerdictAntwoord(v)
-    if (v === verdictGoed) setScore(s => s + 1)
-  }
-
-  function kiesZekerheid(z: ZekerheidKey) {
-    if (zekerheidAntwoord) return
-    setZekerheidAntwoord(z)
-  }
-
-  function volgende() {
-    if (!isLaatsteStap) {
-      setStapIndex(i => i + 1)
-      return
+  function beantwoordHuidigeStap(waarde: MotiefKey | CasusVerdict | ZekerheidKey) {
+    if (stap === 'motief') {
+      if (motiefAntwoord) return
+      setMotiefAntwoord(waarde as MotiefKey)
+      if (waarde === motiefGoed) setMotiefScore(s => s + 1)
+    } else if (stap === 'verdict') {
+      if (verdictAntwoord) return
+      setVerdictAntwoord(waarde as CasusVerdict)
+      if (waarde === verdictGoed) setScore(s => s + 1)
+    } else {
+      if (zekerheidAntwoord) return
+      setZekerheidAntwoord(waarde as ZekerheidKey)
     }
+    if (isLaatsteStap) setFase('wachten')
+  }
+
+  function volgendeStap() {
+    setStapIndex(i => i + 1)
+  }
+
+  function volgendeCasus() {
     if (isLaatsteCasus) {
       setFinished(true)
       onFinished?.(score, casussen.length)
@@ -96,15 +108,10 @@ export default function OefenrondeModal({
     }
     setIndex(i => i + 1)
     setStapIndex(0)
+    setFase('vraag')
     setMotiefAntwoord(null)
     setVerdictAntwoord(null)
     setZekerheidAntwoord(null)
-  }
-
-  function volgendeLabel() {
-    if (!isLaatsteStap) return 'Volgende vraag →'
-    if (isLaatsteCasus) return 'Bekijk resultaat →'
-    return 'Volgende casus →'
   }
 
   if (casussen.length === 0) {
@@ -118,249 +125,286 @@ export default function OefenrondeModal({
     )
   }
 
+  const huidigAntwoord = stap === 'motief' ? motiefAntwoord : stap === 'verdict' ? verdictAntwoord : zekerheidAntwoord
+
   return (
     <Overlay onClose={onClose}>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', borderBottom: '1px solid #2F3565', flexShrink: 0 }}>
-          <div>
-            <p style={{ fontSize: 11, color: '#8B91B8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>
-              Het spel · {lessonTitle}
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', borderBottom: '1px solid #2F3565', flexShrink: 0 }}>
+        <div>
+          <p style={{ fontSize: 11, color: '#8B91B8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>
+            Het spel · {lessonTitle}
+          </p>
+          {!finished && (
+            <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16, color: '#EDEEFC' }}>
+              Vraag {index + 1} van {casussen.length}
+              {stappen.length > 1 && fase === 'vraag' && <span style={{ color: '#8B91B8', fontWeight: 700 }}> · stap {stapIndex + 1}/{stappen.length}</span>}
             </p>
-            {!finished && (
-              <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16, color: '#EDEEFC' }}>
-                Vraag {index + 1} van {casussen.length}
-                {stappen.length > 1 && <span style={{ color: '#8B91B8', fontWeight: 700 }}> · stap {stapIndex + 1}/{stappen.length}</span>}
+          )}
+        </div>
+        <button onClick={onClose} aria-label="Sluiten" style={{ width: 36, height: 36, borderRadius: 12, background: '#181D45', border: '1px solid #2F3565', color: '#8B91B8', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          ✕
+        </button>
+      </div>
+
+      {!finished && (
+        <div style={{ display: 'flex', gap: 5, padding: '14px 24px 0', flexShrink: 0 }}>
+          {casussen.map((_, i) => (
+            <div key={i} style={{ flex: 1, height: 5, borderRadius: 99, background: i < index ? accentFrom : i === index ? `linear-gradient(90deg, ${accentFrom}, ${accentTo})` : '#2F3565' }} />
+          ))}
+        </div>
+      )}
+
+      {/* Body — enige scrollbare gedeelte, zodat de actieknop nooit buiten beeld valt */}
+      <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', padding: 24 }}>
+        {finished ? (
+          <ResultaatScherm
+            score={score} total={casussen.length}
+            motiefScore={heeftMotiefStap ? motiefScore : null}
+            accentFrom={accentFrom} accentTo={accentTo} onClose={onClose}
+          />
+        ) : (
+          <div style={{ maxWidth: 560, margin: '0 auto' }}>
+            {/* Afzender — bewust klein en gedempt, vlak boven de uitspraak: ze horen bij elkaar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <AfzenderAvatar casus={casus} size={28} />
+              <span style={{ fontSize: 12.5, color: '#8B91B8', fontWeight: 600 }}>
+                {casus.afzender}{casus.context ? ` — ${casus.context}` : ''}
+              </span>
+            </div>
+
+            {/* Uitspraak — het citaat zelf, duidelijk als quote gestyled */}
+            {casus.stelling ? (
+              <p style={{ fontFamily: 'Nunito, sans-serif', fontStyle: 'italic', fontWeight: 700, fontSize: 20, color: '#EDEEFC', lineHeight: 1.45, margin: '0 0 6px' }}>
+                "{casus.stelling}"
+              </p>
+            ) : (
+              <p style={{ fontFamily: 'Nunito, sans-serif', fontStyle: 'italic', fontWeight: 700, fontSize: 17, color: '#C5C9E8', lineHeight: 1.45, margin: '0 0 6px' }}>
+                {casus.afzender}{casus.context ? ` — ${casus.context}` : ''}
               </p>
             )}
-          </div>
-          <button onClick={onClose} aria-label="Sluiten" style={{ width: 36, height: 36, borderRadius: 12, background: '#181D45', border: '1px solid #2F3565', color: '#8B91B8', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            ✕
-          </button>
-        </div>
+            {casus.noot && (
+              <p style={{ fontSize: 12.5, color: '#6E74AC', fontStyle: 'italic', marginBottom: 16 }}>({casus.noot})</p>
+            )}
 
-        {!finished && (
-          <div style={{ display: 'flex', gap: 5, padding: '14px 24px 0', flexShrink: 0 }}>
-            {casussen.map((_, i) => (
-              <div key={i} style={{ flex: 1, height: 5, borderRadius: 99, background: i < index ? accentFrom : i === index ? `linear-gradient(90deg, ${accentFrom}, ${accentTo})` : '#2F3565' }} />
-            ))}
-          </div>
-        )}
-
-        {/* Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-          {finished ? (
-            <ResultaatScherm
-              score={score} total={casussen.length}
-              motiefScore={heeftMotiefStap ? motiefScore : null}
-              accentFrom={accentFrom} accentTo={accentTo} onClose={onClose}
-            />
-          ) : (
-            <div style={{ maxWidth: 560, margin: '0 auto' }}>
-              {/* Ruimte voor een illustratie bij deze casus (nog niet ingevuld) */}
-              <div style={{
-                position: 'relative', width: '100%', aspectRatio: '16/7', borderRadius: 14, overflow: 'hidden', marginBottom: 16,
-                background: casus.afbeelding ? undefined : 'repeating-linear-gradient(45deg, #2A3060 0px, #2A3060 4px, #181D45 4px, #181D45 12px)',
-              }}>
-                {casus.afbeelding ? (
-                  <img src={casus.afbeelding} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-                    <span style={{ fontSize: 20, opacity: 0.35 }}>🖼️</span>
-                    <span style={{ fontFamily: 'monospace', fontSize: 10.5, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.04em' }}>afbeelding volgt</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Afzender — bewust klein en gedempt, maar vlak boven de uitspraak: ze horen bij elkaar */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <AfzenderAvatar casus={casus} size={28} />
-                <span style={{ fontSize: 12.5, color: '#8B91B8', fontWeight: 600 }}>
-                  {casus.afzender}{casus.context ? ` — ${casus.context}` : ''}
-                </span>
-              </div>
-
-              {/* Uitspraak — het citaat zelf, duidelijk als quote gestyled */}
-              {casus.stelling ? (
-                <p style={{ fontFamily: 'Nunito, sans-serif', fontStyle: 'italic', fontWeight: 700, fontSize: 20, color: '#EDEEFC', lineHeight: 1.45, margin: '0 0 6px' }}>
-                  "{casus.stelling}"
-                </p>
+            {/* Ruimte voor een illustratie bij deze casus (nog niet ingevuld) */}
+            <div style={{
+              position: 'relative', width: '100%', aspectRatio: '16/7', borderRadius: 14, overflow: 'hidden', marginBottom: 18,
+              background: casus.afbeelding ? undefined : 'repeating-linear-gradient(45deg, #2A3060 0px, #2A3060 4px, #181D45 4px, #181D45 12px)',
+            }}>
+              {casus.afbeelding ? (
+                <img src={casus.afbeelding} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
-                <p style={{ fontFamily: 'Nunito, sans-serif', fontStyle: 'italic', fontWeight: 700, fontSize: 17, color: '#C5C9E8', lineHeight: 1.45, margin: '0 0 6px' }}>
-                  {casus.afzender}{casus.context ? ` — ${casus.context}` : ''}
-                </p>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 20, opacity: 0.35 }}>🖼️</span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 10.5, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.04em' }}>afbeelding volgt</span>
+                </div>
               )}
-              {casus.noot && (
-                <p style={{ fontSize: 12.5, color: '#6E74AC', fontStyle: 'italic', marginBottom: 16 }}>({casus.noot})</p>
-              )}
+            </div>
 
-              {/* Vraag — duidelijk gemarkeerd als dé vraag die nu beantwoord moet worden */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 9, margin: '18px 0 12px' }}>
-                <span style={{ fontSize: 19 }}>{STAP_ICOON[stap]}</span>
-                <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16, color: '#EDEEFC' }}>
-                  {STAP_VRAAG[stap]}
-                </p>
-              </div>
+            {fase === 'vraag' && (
+              <>
+                {/* Vraag — duidelijk gemarkeerd als dé vraag die nu beantwoord moet worden */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12 }}>
+                  <span style={{ fontSize: 19 }}>{STAP_ICOON[stap]}</span>
+                  <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 16, color: '#EDEEFC' }}>
+                    {STAP_VRAAG[stap]}
+                  </p>
+                </div>
 
-              {stap === 'motief' && (
-                <>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+                {stap === 'motief' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                     {motiefOptiesGeshuffeld.map(optie => {
                       const info = MOTIEF_OPTIES[optie]
                       const isSelected = motiefAntwoord === optie
-                      const isCorrectOptie = motiefAntwoord !== null && optie === motiefGoed
                       return (
-                        <button
-                          key={optie}
-                          onClick={() => kiesMotief(optie)}
-                          disabled={motiefAntwoord !== null}
-                          style={{
-                            textAlign: 'left', padding: '13px 14px', borderRadius: 14, cursor: motiefAntwoord ? 'default' : 'pointer',
-                            fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 14,
-                            background: isSelected || isCorrectOptie ? `${accentFrom}22` : '#181D45',
-                            border: isSelected || isCorrectOptie ? `2px solid ${isCorrectOptie ? '#6BCF7F' : accentFrom}` : '1px solid #2F3565',
-                            color: isSelected || isCorrectOptie ? (isCorrectOptie ? '#6BCF7F' : '#EDEEFC') : '#C5C9E8',
-                            transition: 'all 0.15s',
-                          }}
-                        >
+                        <OptieKnop key={optie} geselecteerd={isSelected} disabled={motiefAntwoord !== null} accentFrom={accentFrom}
+                          onClick={() => beantwoordHuidigeStap(optie)} left>
                           {info.emoji} {info.label}
-                        </button>
+                        </OptieKnop>
                       )
                     })}
                   </div>
+                )}
 
-                  {motiefAntwoord && (
-                    <RevealPanel correct={motiefCorrect} accentFrom={accentFrom} accentTo={accentTo} onVolgende={volgende} label={volgendeLabel()}>
-                      <p style={{ fontFamily: 'Nunito', fontWeight: 900, fontSize: 15, color: motiefCorrect ? '#6BCF7F' : '#FF6B8A', marginBottom: 10 }}>
-                        {motiefCorrect ? '✓ Klopt!' : `✕ Niet helemaal — het juiste antwoord is "${MOTIEF_OPTIES[motiefGoed!].label}"`}
-                      </p>
-                      <p style={{ fontSize: 13.5, color: '#C5C9E8', lineHeight: 1.55 }}>
-                        <strong style={{ color: '#EDEEFC' }}>Waarom: </strong>
-                        {casus.trigger}.
-                      </p>
-                    </RevealPanel>
-                  )}
-                </>
-              )}
-
-              {stap === 'verdict' && (
-                <>
-                  <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                {stap === 'verdict' && (
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                     {VERDICT_OPTIES.map(optie => {
                       const info = VERDICT_INFO[optie]
                       const isSelected = verdictAntwoord === optie
-                      const isCorrectOptie = verdictAntwoord !== null && optie === casus.verdict
                       return (
-                        <button
-                          key={optie}
-                          onClick={() => kiesVerdict(optie)}
-                          disabled={verdictAntwoord !== null}
-                          style={{
-                            flex: 1, padding: '14px 6px', borderRadius: 14, cursor: verdictAntwoord ? 'default' : 'pointer',
-                            fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 14,
-                            background: isSelected || isCorrectOptie ? `${info.kleur}22` : '#181D45',
-                            border: isSelected || isCorrectOptie ? `2px solid ${info.kleur}` : '1px solid #2F3565',
-                            color: isSelected || isCorrectOptie ? info.kleur : '#C5C9E8',
-                            transition: 'all 0.15s',
-                          }}
-                        >
+                        <OptieKnop key={optie} geselecteerd={isSelected} disabled={verdictAntwoord !== null} accentFrom={accentFrom}
+                          onClick={() => beantwoordHuidigeStap(optie)}>
                           {info.emoji} {info.label}
-                        </button>
+                        </OptieKnop>
                       )
                     })}
                   </div>
+                )}
 
-                  {verdictAntwoord && (
-                    <RevealPanel correct={verdictCorrect} accentFrom={accentFrom} accentTo={accentTo} onVolgende={volgende} label={volgendeLabel()}>
-                      <p style={{ fontFamily: 'Nunito', fontWeight: 900, fontSize: 15, color: verdictCorrect ? '#6BCF7F' : '#FF6B8A', marginBottom: 10 }}>
-                        {verdictCorrect ? '✓ Klopt!' : `✕ Niet helemaal — het juiste antwoord is "${VERDICT_INFO[casus.verdict].label}"`}
-                      </p>
-                      <p style={{ fontSize: 13.5, color: '#C5C9E8', lineHeight: 1.55, marginBottom: 10 }}>
-                        <strong style={{ color: '#EDEEFC' }}>Waarom deze alarmbel afgaat: </strong>
-                        {casus.trigger}.
-                      </p>
-                      <p style={{ fontSize: 13.5, color: '#C5C9E8', lineHeight: 1.55 }}>
-                        <strong style={{ color: VERDICT_INFO[casus.verdict].kleur }}>{VERDICT_INFO[casus.verdict].emoji} {VERDICT_INFO[casus.verdict].label}: </strong>
-                        {casus.uitleg}
-                      </p>
-                    </RevealPanel>
-                  )}
-                </>
-              )}
-
-              {stap === 'zekerheid' && (
-                <>
-                  <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-                    {ZEKERHEID_OPTIES.map(optie => {
-                      const isSelected = zekerheidAntwoord === optie.key
-                      return (
-                        <button
-                          key={optie.key}
-                          onClick={() => kiesZekerheid(optie.key)}
-                          disabled={zekerheidAntwoord !== null}
-                          style={{
-                            flex: '1 1 auto', minWidth: 120, padding: '14px 6px', borderRadius: 14, cursor: zekerheidAntwoord ? 'default' : 'pointer',
-                            fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 14,
-                            background: isSelected ? `${accentFrom}22` : '#181D45',
-                            border: isSelected ? `2px solid ${accentFrom}` : '1px solid #2F3565',
-                            color: isSelected ? '#EDEEFC' : '#C5C9E8',
-                            transition: 'all 0.15s',
-                          }}
-                        >
-                          {optie.emoji} {optie.label}
-                        </button>
-                      )
-                    })}
+                {stap === 'zekerheid' && (
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+                    {ZEKERHEID_OPTIES.map(optie => (
+                      <OptieKnop key={optie.key} geselecteerd={zekerheidAntwoord === optie.key} disabled={zekerheidAntwoord !== null} accentFrom={accentFrom}
+                        onClick={() => beantwoordHuidigeStap(optie.key)} minWidth={120}>
+                        {optie.emoji} {optie.label}
+                      </OptieKnop>
+                    ))}
                   </div>
+                )}
 
-                  {zekerheidAntwoord && (
-                    <button
-                      onClick={volgende}
-                      style={{
-                        width: '100%', padding: '14px', borderRadius: 14, cursor: 'pointer', border: 'none',
-                        fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 14.5, color: '#0F1335',
-                        background: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`,
-                      }}
-                    >
-                      {volgendeLabel()}
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </div>
+                {huidigAntwoord && !isLaatsteStap && (
+                  <button
+                    onClick={volgendeStap}
+                    style={{
+                      width: '100%', padding: '14px', borderRadius: 14, cursor: 'pointer', border: 'none',
+                      fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 14.5, color: '#0F1335',
+                      background: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`,
+                    }}
+                  >
+                    Volgende vraag →
+                  </button>
+                )}
+              </>
+            )}
+
+            {fase === 'wachten' && <WachtScherm accentFrom={accentFrom} />}
+
+            {fase === 'reveal' && (
+              <UitslagScherm
+                casus={casus}
+                heeftMotiefStap={heeftMotiefStap}
+                motiefAntwoord={motiefAntwoord} motiefGoed={motiefGoed} motiefCorrect={motiefCorrect}
+                verdictAntwoord={verdictAntwoord} verdictCorrect={verdictCorrect}
+                accentFrom={accentFrom} accentTo={accentTo}
+                onVolgende={volgendeCasus}
+                label={isLaatsteCasus ? 'Bekijk resultaat →' : 'Volgende casus →'}
+              />
+            )}
+          </div>
+        )}
       </div>
     </Overlay>
   )
 }
 
-function RevealPanel({
-  correct, accentFrom, accentTo, onVolgende, label, children,
+function OptieKnop({
+  children, geselecteerd, disabled, accentFrom, onClick, left, minWidth,
 }: {
-  correct: boolean
+  children: React.ReactNode
+  geselecteerd: boolean
+  disabled: boolean
+  accentFrom: string
+  onClick: () => void
+  left?: boolean
+  minWidth?: number
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        flex: left ? undefined : 1, minWidth, textAlign: left ? 'left' : 'center',
+        padding: left ? '13px 14px' : '14px 6px', borderRadius: 14, cursor: disabled ? 'default' : 'pointer',
+        fontFamily: 'Nunito, sans-serif', fontWeight: left ? 800 : 900, fontSize: 14,
+        background: geselecteerd ? `${accentFrom}22` : '#181D45',
+        border: geselecteerd ? `2px solid ${accentFrom}` : '1px solid #2F3565',
+        color: geselecteerd ? '#EDEEFC' : '#C5C9E8',
+        transition: 'all 0.15s',
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+function WachtScherm({ accentFrom }: { accentFrom: string }) {
+  return (
+    <div style={{ textAlign: 'center', padding: '32px 12px' }}>
+      <style>{`
+        @keyframes wachtPulse { 0%, 80%, 100% { opacity: 0.25; transform: scale(0.85); } 40% { opacity: 1; transform: scale(1); } }
+      `}</style>
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16 }}>
+        {[0, 1, 2].map(i => (
+          <span
+            key={i}
+            style={{
+              width: 12, height: 12, borderRadius: '50%', background: accentFrom,
+              display: 'inline-block', animation: 'wachtPulse 1.2s ease-in-out infinite', animationDelay: `${i * 0.15}s`,
+            }}
+          />
+        ))}
+      </div>
+      <p style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: 15, color: '#C5C9E8' }}>
+        Aan het wachten tot je klasgenoten hebben geantwoord…
+      </p>
+    </div>
+  )
+}
+
+function UitslagScherm({
+  casus, heeftMotiefStap, motiefAntwoord, motiefGoed, motiefCorrect, verdictAntwoord, verdictCorrect, accentFrom, accentTo, onVolgende, label,
+}: {
+  casus: import('@/lib/casussen').Casus
+  heeftMotiefStap: boolean
+  motiefAntwoord: MotiefKey | null
+  motiefGoed: MotiefKey | null
+  motiefCorrect: boolean
+  verdictAntwoord: CasusVerdict | null
+  verdictCorrect: boolean
   accentFrom: string
   accentTo: string
   onVolgende: () => void
   label: string
-  children: React.ReactNode
 }) {
   return (
-    <div style={{
-      background: '#181D45', borderRadius: 16, padding: 18,
-      border: `1px solid ${correct ? '#6BCF7F44' : '#FF6B8A44'}`,
-    }}>
-      {children}
+    <div>
+      <p style={{ fontSize: 13, color: '#8B91B8', fontWeight: 700, marginBottom: 12 }}>Uitslag</p>
+
+      {heeftMotiefStap && motiefAntwoord && (
+        <UitslagRij
+          titel="Motief" correct={motiefCorrect}
+          jouwLabel={MOTIEF_OPTIES[motiefAntwoord].label}
+          juisteLabel={motiefGoed ? MOTIEF_OPTIES[motiefGoed].label : ''}
+          uitleg={casus.trigger}
+        />
+      )}
+
+      {verdictAntwoord && (
+        <UitslagRij
+          titel="Zin of onzin" correct={verdictCorrect}
+          jouwLabel={VERDICT_INFO[verdictAntwoord].label}
+          juisteLabel={VERDICT_INFO[casus.verdict].label}
+          uitleg={casus.uitleg}
+        />
+      )}
+
       <button
         onClick={onVolgende}
         style={{
-          width: '100%', marginTop: 16, padding: '14px', borderRadius: 14, cursor: 'pointer', border: 'none',
+          width: '100%', marginTop: 4, padding: '14px', borderRadius: 14, cursor: 'pointer', border: 'none',
           fontFamily: 'Nunito, sans-serif', fontWeight: 900, fontSize: 14.5, color: '#0F1335',
           background: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`,
         }}
       >
         {label}
       </button>
+    </div>
+  )
+}
+
+function UitslagRij({ titel, correct, jouwLabel, juisteLabel, uitleg }: { titel: string; correct: boolean; jouwLabel: string; juisteLabel: string; uitleg: string }) {
+  return (
+    <div style={{
+      background: '#181D45', borderRadius: 16, padding: 16, marginBottom: 12,
+      border: `1px solid ${correct ? '#6BCF7F44' : '#FF6B8A44'}`,
+    }}>
+      <p style={{ fontFamily: 'Nunito', fontWeight: 900, fontSize: 14, color: correct ? '#6BCF7F' : '#FF6B8A', marginBottom: 8 }}>
+        {correct ? `✓ ${titel}: klopt!` : `✕ ${titel}: het juiste antwoord is "${juisteLabel}"`}
+      </p>
+      <p style={{ fontSize: 13.5, color: '#C5C9E8', lineHeight: 1.55 }}>
+        {uitleg}
+      </p>
     </div>
   )
 }
@@ -423,9 +467,9 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: '100%', maxWidth: 640, maxHeight: '88vh', background: '#20264F', borderRadius: 24,
-          border: '1px solid #2F3565', boxShadow: '0 24px 64px rgba(0,0,0,0.5)', overflow: 'hidden',
-          display: 'flex', flexDirection: 'column',
+          width: '100%', maxWidth: 640, height: '88vh', background: '#20264F', borderRadius: 24,
+          border: '1px solid #2F3565', boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
+          display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden',
         }}
       >
         {children}
