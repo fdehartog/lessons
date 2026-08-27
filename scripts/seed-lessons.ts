@@ -277,7 +277,7 @@ async function seed() {
   console.log('🌱 Seeding lessons...')
 
   // Fetch course and alarm bells
-  const { data: course } = await supabase.from('courses').select('id').single()
+  const { data: course } = await supabase.from('lesson_courses').select('id').single()
   if (!course) { console.error('No course found — run seed.ts first'); process.exit(1) }
 
   const { data: alarmBells } = await supabase
@@ -288,7 +288,7 @@ async function seed() {
 
   const bellByPosition = Object.fromEntries(alarmBells.map(b => [b.position, b.id]))
 
-  const { data: experts } = await supabase.from('experts').select('id, slug')
+  const { data: experts } = await supabase.from('scientists').select('id, slug')
   if (!experts) { console.error('No experts found'); process.exit(1) }
   const expertBySlug = Object.fromEntries(experts.map(e => [e.slug, e.id]))
 

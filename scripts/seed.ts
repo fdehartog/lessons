@@ -43,7 +43,7 @@ async function seed() {
 
   // Course
   const { data: course, error: courseErr } = await supabase
-    .from('courses')
+    .from('lesson_courses')
     .upsert(data.course, { onConflict: 'slug' })
     .select('id')
     .single()
@@ -52,7 +52,7 @@ async function seed() {
 
   // Experts
   const { data: experts, error: expertsErr } = await supabase
-    .from('experts')
+    .from('scientists')
     .upsert(data.experts, { onConflict: 'slug' })
     .select('id, slug')
   if (expertsErr) { console.error('Experts error:', expertsErr.message); process.exit(1) }
