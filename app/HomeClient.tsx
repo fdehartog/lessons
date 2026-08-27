@@ -52,7 +52,7 @@ export default function LesoverzichtPage() {
   useEffect(() => {
     async function load() {
       const [{ data: courseData }, { data: bellsData }, { data: progressData }] = await Promise.all([
-        supabase.from('courses').select('*').single(),
+        supabase.from('lesson_courses').select('*').single(),
         supabase
           .from('alarm_bells')
           .select('*, experts(name, initials, role)')

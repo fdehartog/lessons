@@ -82,7 +82,7 @@ export default function LesDetailPage() {
           .select('*, alarm_bells(color_solid, color_from, color_to)')
           .eq('slug', slug)
           .single(),
-        supabase.from('courses').select('tip_of_the_day').single(),
+        supabase.from('lesson_courses').select('tip_of_the_day').single(),
         supabase
           .from('student_progress')
           .select('alarm_bell_id')
