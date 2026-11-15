@@ -272,26 +272,19 @@ function draw(){
     ctx.fillStyle=C.magma;ctx.textAlign='left';ctx.fillText('straight down · 12,742 km',nd[0]+12,nd[1]);}
 
   // country names
+  // fixed set of names: always drawn when their spot is on screen, never swapped in or out
   ctx.textAlign='center';
-  const placed=[];const topPad=64,botPad=H-(platePx+24);let count=0;
-  for(const L of labels){
-    if(count>=18) break;
-    const s=project(L.p,1e-4); if(!s) continue;
-    if(s[0]<30||s[0]>W-30||s[1]<topPad||s[1]>botPad) continue;
-    ctx.font='400 17px "Instrument Serif", Georgia, serif';
-    const w=Math.max(ctx.measureText(L.name).width,70)/2+6, x0=s[0]-w,x1=s[0]+w,y0=s[1]-12,y1=s[1]+24;
-    let hit=false;for(const r of placed){if(x0<r[2]&&x1>r[0]&&y0<r[3]&&y1>r[1]){hit=true;break;}}
-    if(hit) continue;
-    placed.push([x0,y0,x1,y1]);count++;
-    const a=L.km<3000?1:L.km<9000?.85:.7;
-    ctx.fillStyle='rgba(240,227,203,'+a+')';ctx.fillText(L.name,s[0],s[1]);
-    ctx.font='400 10.5px "IBM Plex Mono", ui-monospace, monospace';
-    ctx.fillStyle='rgba(163,149,132,'+a+')';ctx.fillText(fmtKm(L.km),s[0],s[1]+15);
+  ctx.font='400 9px "IBM Plex Sans", system-ui, sans-serif';
+  ctx.fillStyle='rgba(240,227,203,.42)';
+  for(let i=0;i<labels.length&&i<LABEL_COUNT;i++){
+    const s=project(labels[i].p,1e-4); if(!s) continue;
+    ctx.fillText(labels[i].name.toUpperCase(),s[0],s[1]);
   }
   // crosshair
   const cx=W/2,cy=H/2;ctx.strokeStyle=C.magma;ctx.lineWidth=1.5;
   ctx.beginPath();ctx.arc(cx,cy,11,0,7);ctx.moveTo(cx-20,cy);ctx.lineTo(cx-6,cy);ctx.moveTo(cx+6,cy);ctx.lineTo(cx+20,cy);ctx.moveTo(cx,cy-20);ctx.lineTo(cx,cy-6);ctx.moveTo(cx,cy+6);ctx.lineTo(cx,cy+20);ctx.stroke();
 }
+const LABEL_COUNT=80;   // only the largest countries get a name
 function fmtKm(km){return Math.round(km<100?km:Math.round(km/10)*10).toLocaleString('en-US')+' km';}
 
 /* ---------- readout for the point in the crosshair ---------- */
