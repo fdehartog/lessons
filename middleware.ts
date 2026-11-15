@@ -7,6 +7,7 @@ const OPEN_PATHS = [
   '/api/login', // moet bereikbaar zijn zónder cookie — anders kan niemand ooit inloggen
   '/antwoord', // wetenschapper komt binnen via magic-link uit de mail, zonder site-login
   '/earth-card.html', // losse groetkaart (Through the Earth) — ontvangers hebben geen site-wachtwoord
+  '/earth-live.html', // realistische versie met dag/nacht — idem, open voor ontvangers
 ]
 
 export function middleware(request: NextRequest) {
