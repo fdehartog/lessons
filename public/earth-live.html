@@ -32,6 +32,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--pin);outline-of
 .seg small{font-size:11px;color:var(--soft);padding:0 6px 0 10px;flex:none}
 .seg button{min-height:32px;padding:0 12px;border:0;border-radius:999px;background:transparent;cursor:pointer;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .seg button.on{background:var(--text);color:#0b0f18;font-weight:500}
+.scale{margin-left:auto;font-size:11px;line-height:1.25;color:var(--text);text-align:right;max-width:110px;text-shadow:0 1px 4px rgba(0,0,0,.9)}
+.btn[hidden]{display:none}
+#tap{position:fixed;inset:0;border:0;background:rgba(5,7,13,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:24px;text-align:center;cursor:pointer}
+#tap[hidden]{display:none}
+#tap b{font-size:24px;font-weight:600}
+#tap span{font-size:14px;color:var(--soft);max-width:280px;line-height:1.45}
 .chip{min-height:40px;padding:0 14px;border:1px solid var(--edge);border-radius:999px;background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;font-size:13.5px;margin-left:auto;flex:none}
 .chip.on{background:var(--pin);border-color:var(--pin);color:#1a1205;font-weight:500}
 
@@ -67,7 +73,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--pin);outline-of
 
 <div class="top">
   <div class="seg" role="group" aria-label="View from"><small>View from</small><button type="button" id="viewA"></button><button type="button" id="viewB"></button></div>
-  <button class="chip" id="sensorBtn" type="button">Tilt</button>
+  <span class="scale">True size at 30 cm from your eyes</span>
 </div>
 
 <div class="plate" aria-live="polite">
@@ -79,8 +85,11 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--pin);outline-of
   <div class="acts">
     <button class="btn primary" id="shareOpen" type="button">Share</button>
     <button class="btn" id="aimBtn" type="button">Look at them</button>
+    <button class="btn" id="tiltBtn" type="button">Turn tilt on</button>
   </div>
 </div>
+
+<button id="tap" type="button" hidden><b>Tap to start</b><span>Your phone will ask for motion access. Then point it at the ground and turn around.</span></button>
 
 <div class="sheet" id="sheet" hidden>
   <form class="card" id="cardForm">
@@ -305,7 +314,9 @@ const hasGL=initGL();
 let W=0,H=0,DPR=1,focal=1;
 function resize(){DPR=Math.min(window.devicePixelRatio||1,2);W=cv.clientWidth;H=cv.clientHeight;
   for(const c of [cv,glc]){c.width=Math.round(W*DPR);c.height=Math.round(H*DPR);}
-  if(gl)gl.viewport(0,0,glc.width,glc.height);dirty=true;}
+  if(gl)gl.viewport(0,0,glc.width,glc.height);
+  // true scale: the screen is a window of its real size (about 155 CSS px per inch) held 32 cm from the eye
+  fov=Math.max(14,Math.min(45,2*Math.atan((H/155*2.54/2)/32)/D2R));dirty=true;}
 function tracePolyline(p,n,near){
   const fx=fwd[0],fy=fwd[1],fz=fwd[2],rx=right[0],ry=right[1],rz=right[2],ux=up[0],uy=up[1],uz=up[2],cx=W/2,cy=H/2;
   let px=0,py=0,pz=0,pv=false;
@@ -399,25 +410,24 @@ function frame(now){const moved=stepCamera();if(dirty||moved){dirty=false;draw()
 
 /* ---------- view switch ---------- */
 function paintSeg(){$('viewA').textContent=P.a.name;$('viewB').textContent=P.b.name;$('viewA').classList.toggle('on',view==='a');$('viewB').classList.toggle('on',view==='b');}
-function setView(k){view=k;userMoved=false;if(mode==='sensor')stopSensors();paintSeg();setHere();}
+function setView(k){view=k;userMoved=false;paintSeg();setHere();}
 $('viewA').addEventListener('click',()=>setView('a'));
 $('viewB').addEventListener('click',()=>setView('b'));
-$('aimBtn').addEventListener('click',()=>{if(mode==='sensor')stopSensors();userMoved=false;aim();});
+$('aimBtn').addEventListener('click',()=>{userMoved=false;aim();});
 
 /* ---------- touch ---------- */
-const ptrs=new Map();let pinch0=0,fov0=fov;
-cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);if(ptrs.size===2){const a=[...ptrs.values()];pinch0=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);fov0=fov;}});
+const ptrs=new Map();
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);});
 cv.addEventListener('pointermove',e=>{
   const p=ptrs.get(e.pointerId); if(!p) return;
   const dx=e.clientX-p[0],dy=e.clientY-p[1];p[0]=e.clientX;p[1]=e.clientY;
-  if(ptrs.size===2){const a=[...ptrs.values()],d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);if(pinch0>0){fov=Math.max(18,Math.min(100,fov0*pinch0/d));dirty=true;}return;}
+  if(ptrs.size>1) return;
   const deg=fov/H;userMoved=true;
   if(mode==='drag'){heading=(heading-dx*deg+360)%360;pitch=Math.max(-89.5,Math.min(89,pitch+dy*deg));dragTarget();}
   else yawFix=(yawFix-dx*deg+360)%360;
 });
-const drop=e=>{ptrs.delete(e.pointerId);pinch0=0;};
+const drop=e=>{ptrs.delete(e.pointerId);};
 cv.addEventListener('pointerup',drop);cv.addEventListener('pointercancel',drop);
-cv.addEventListener('wheel',e=>{e.preventDefault();fov=Math.max(18,Math.min(100,fov*(e.deltaY>0?1.08:.93)));dirty=true;},{passive:false});
 
 /* ---------- phone tilt ---------- */
 let gotAbs=false,gotAny=false,listening=false;
@@ -432,7 +442,7 @@ function onOri(e){
   if(!gotAny){gotAny=true;setTimeout(()=>{if(mode==='sensor'&&!gotAbs)note('Your phone gives tilt but no compass, so north is a guess. Drag sideways to line it up.');},600);}
   sensorTarget(a,e.beta,e.gamma||0);
 }
-function sensorUi(){const on=mode==='sensor';$('sensorBtn').classList.toggle('on',on);$('sensorBtn').textContent=on?'Tilt on':'Tilt';}
+function sensorUi(){const on=mode==='sensor';$('aimBtn').hidden=on;$('tiltBtn').hidden=on;}
 function stopSensors(){mode='drag';heading=(Math.atan2(fwd[0],fwd[1])/D2R+360)%360;pitch=Math.asin(fwd[2])/D2R;dragTarget();sensorUi();}
 async function startSensors(){
   if(typeof DeviceOrientationEvent==='undefined'){note('This browser has no tilt sensor. Drag to look around instead.');return;}
@@ -441,9 +451,15 @@ async function startSensors(){
   catch(err){note('Motion sensors are blocked here. Open this page in Safari or Chrome.');return;}
   mode='sensor';gotAny=false;gotAbs=false;sensorUi();
   if(!listening){listening=true;window.addEventListener('deviceorientationabsolute',onOri,true);window.addEventListener('deviceorientation',onOri,true);}
-  setTimeout(()=>{if(mode==='sensor'&&!gotAny){stopSensors();note('No tilt data arrives here. Open this page in Safari or Chrome, or drag to look around.');}},2200);
+  setTimeout(()=>{if(mode==='sensor'&&!gotAny){stopSensors();note('No tilt data arrives on this device. Drag to look around instead.');}},2200);
 }
-$('sensorBtn').addEventListener('click',()=>{if(mode==='sensor')stopSensors();else{startSensors();if(!gpsFixed)locate(true);}});
+$('tiltBtn').addEventListener('click',()=>{startSensors();if(!gpsFixed)locate(true);});
+$('tap').addEventListener('click',()=>{$('tap').hidden=true;startSensors();if(!gpsFixed)locate(true);});
+function autoTilt(){
+  if(typeof DeviceOrientationEvent==='undefined') return;
+  if(typeof DeviceOrientationEvent.requestPermission==='function') $('tap').hidden=false;   // iPhone: needs one tap
+  else startSensors();
+}
 
 /* ---------- your own location ---------- */
 let gpsFixed=false;
@@ -503,6 +519,7 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{measurePl
 resize();paintSeg();setHere();fwd=tF.slice();right=tR.slice();measurePlate();
 if(!hasGL)note('This browser cannot draw the photographic Earth, so only the borders show.');
 locate(true);
+autoTilt();
 requestAnimationFrame(frame);
 })();
 </script>
