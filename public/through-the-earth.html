@@ -373,17 +373,17 @@ async function startSensors(){
 function setSensorUi(){const on=mode==='sensor';$('sensorBtn').classList.toggle('on',on);$('sensorLabel').textContent=on?'Tilt on':'Use phone tilt';}
 $('sensorBtn').addEventListener('click',()=>{
   if(mode==='sensor'){mode='drag';heading=(Math.atan2(fwd[0],fwd[1])/D2R+360)%360;pitch=Math.asin(fwd[2])/D2R;dragTarget();setSensorUi();note('Drag to look around. Pinch to zoom.');}
-  else startSensors();
+  else {startSensors();if(!gpsFixed)locate(true);}
 });
 
 /* ---------- place ---------- */
-const CITIES=[['Utrecht',52.09,5.12],['Tokyo',35.68,139.69],['New York',40.71,-74.01],['São Paulo',-23.55,-46.63],['Cape Town',-33.92,18.42],['Nairobi',-1.29,36.82],['Reykjavík',64.15,-21.94],['Delhi',28.61,77.21],['Singapore',1.35,103.82],['Sydney',-33.87,151.21],['Mexico City',19.43,-99.13],['Honolulu',21.31,-157.86]];
+const CITIES=[['Utrecht',52.09,5.12],['Amsterdam',52.37,4.90],['Tokyo',35.68,139.69],['Kyoto',35.01,135.77],['Osaka',34.69,135.50],['Nagasaki',32.75,129.88],['Sapporo',43.06,141.35],['Fukuoka',33.59,130.40],['Naha (Okinawa)',26.21,127.68],['New York',40.71,-74.01],['São Paulo',-23.55,-46.63],['Cape Town',-33.92,18.42],['Nairobi',-1.29,36.82],['Reykjavík',64.15,-21.94],['Delhi',28.61,77.21],['Singapore',1.35,103.82],['Sydney',-33.87,151.21],['Mexico City',19.43,-99.13],['Honolulu',21.31,-157.86]];
 const sel=$('citySel');
 sel.innerHTML='<option value="">Choose…</option>'+CITIES.map((c,i)=>'<option value="'+i+'">'+c[0]+'</option>').join('');
 sel.addEventListener('change',()=>{const c=CITIES[sel.value];if(c){$('latIn').value=c[1];$('lonIn').value=c[2];}});
 function openSheet(){$('latIn').value=here.lat.toFixed(4);$('lonIn').value=here.lon.toFixed(4);sel.value='';$('gpsMsg').textContent='';$('sheet').hidden=false;}
 function closeSheet(){$('sheet').hidden=true;}
-function place(lat,lon,label){setHere(lat,lon);$('placeName').textContent=label;try{localStorage.setItem('tte.place',JSON.stringify({lat,lon,label}));}catch(e){}}
+function place(lat,lon,label){setHere(lat,lon);here.label=label;$('placeName').textContent=label;try{localStorage.setItem('tte.place',JSON.stringify({lat,lon,label}));}catch(e){}}
 $('placeBtn').addEventListener('click',openSheet);
 $('cancelBtn').addEventListener('click',closeSheet);
 $('sheet').addEventListener('click',e=>{if(e.target===$('sheet'))closeSheet();});
@@ -393,16 +393,20 @@ $('placeForm').addEventListener('submit',e=>{e.preventDefault();
   const c=CITIES[sel.value];
   place(lat,lon,c&&c[1]===lat&&c[2]===lon?c[0]:Math.abs(lat).toFixed(2)+'°'+(lat>=0?'N':'S')+' '+Math.abs(lon).toFixed(2)+'°'+(lon>=0?'E':'W'));
   closeSheet();});
-$('gpsBtn').addEventListener('click',()=>{
+let gpsFixed=false;
+function locate(silent){
   const m=$('gpsMsg');
-  const blocked='Location is blocked in this view. Pick a place or type coordinates. In your phone browser, from an https address, this button works.';
-  if(!navigator.geolocation){m.textContent=blocked;return;}
-  m.textContent='Finding you…';
+  const blocked='Location access is off for this page. Allow it in your browser settings, or pick a place or type coordinates.';
+  if(!navigator.geolocation){if(!silent)m.textContent=blocked;return;}
+  if(!silent)m.textContent='Finding you…';
+  if(silent&&!gpsFixed)$('placeName').textContent='Finding you…';
+  const prevLabel=here.label;
   try{navigator.geolocation.getCurrentPosition(
-    p=>{place(p.coords.latitude,p.coords.longitude,'My location');closeSheet();},
-    err=>{m.textContent=err&&err.code===3?'Finding your location took too long. Try again outdoors, or pick a place.':blocked;},
-    {enableHighAccuracy:false,timeout:12000,maximumAge:600000});}catch(e){m.textContent=blocked;}
-});
+    p=>{gpsFixed=true;place(p.coords.latitude,p.coords.longitude,'My location ('+Math.abs(p.coords.latitude).toFixed(1)+'°'+(p.coords.latitude>=0?'N':'S')+' '+Math.abs(p.coords.longitude).toFixed(1)+'°'+(p.coords.longitude>=0?'E':'W')+')');closeSheet();},
+    err=>{if(silent){$('placeName').textContent=prevLabel||'Tap to set location';}else m.textContent=err&&err.code===3?'Finding your location took too long. Try again outdoors, or pick a place.':blocked;},
+    {enableHighAccuracy:false,timeout:15000,maximumAge:300000});}catch(e){if(!silent)m.textContent=blocked;}
+}
+$('gpsBtn').addEventListener('click',()=>locate(false));
 
 function measurePlate(){const r=document.querySelector('.plate').getBoundingClientRect();platePx=r.height+16;dirty=true;}
 window.addEventListener('resize',()=>{resize();measurePlate();});
@@ -410,8 +414,9 @@ if(screen.orientation&&screen.orientation.addEventListener)screen.orientation.ad
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{measurePlate();});
 
 let saved=null;try{saved=JSON.parse(localStorage.getItem('tte.place'));}catch(e){}
-if(saved&&typeof saved.lat==='number'&&typeof saved.lon==='number'){setHere(saved.lat,saved.lon);$('placeName').textContent=saved.label||'Saved place';}
-else setHere(here.lat,here.lon);
+if(saved&&typeof saved.lat==='number'&&typeof saved.lon==='number'){setHere(saved.lat,saved.lon);here.label=saved.label||'Saved place';$('placeName').textContent=here.label;}
+else {setHere(here.lat,here.lon);here.label='Utrecht (example)';}
+locate(true);   // ask the browser where you are as soon as the page opens
 resize();measurePlate();dragTarget();fwd=tF.slice();right=tR.slice();
 requestAnimationFrame(frame);
 })();
