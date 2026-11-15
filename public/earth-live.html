@@ -72,7 +72,6 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--pin);outline-of
 <canvas id="over" aria-label="The Earth seen from the inside, with day and night"></canvas>
 
 <div class="top">
-  <div class="seg" role="group" aria-label="View from"><small>View from</small><button type="button" id="viewA"></button><button type="button" id="viewB"></button></div>
   <span class="scale">True size at 30 cm from your eyes</span>
 </div>
 
@@ -83,8 +82,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--pin);outline-of
   <p class="words" id="words"></p>
   <p class="hint" id="hint"></p>
   <div class="acts">
-    <button class="btn primary" id="shareOpen" type="button">Share</button>
-    <button class="btn" id="aimBtn" type="button">Look at them</button>
+    <button class="btn primary" id="shareOpen" type="button">Share where I am</button>
+    <button class="btn" id="aimBtn" type="button">Look there</button>
     <button class="btn" id="tiltBtn" type="button">Turn tilt on</button>
   </div>
 </div>
@@ -93,8 +92,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--pin);outline-of
 
 <div class="sheet" id="sheet" hidden>
   <form class="card" id="cardForm">
-    <h2>Who is where</h2>
-    <h3>You</h3>
+    <h2>Share where you are</h2>
     <label for="meName">Your name
       <input id="meName" type="text" maxlength="40" autocomplete="off">
     </label>
@@ -104,21 +102,13 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--pin);outline-of
       <label for="meLat">Latitude <input id="meLat" type="number" inputmode="decimal" step="any" min="-90" max="90"></label>
       <label for="meLon">Longitude <input id="meLon" type="number" inputmode="decimal" step="any" min="-180" max="180"></label>
     </div>
-    <h3>The other person</h3>
-    <label for="frName">Their name
-      <input id="frName" type="text" maxlength="40" autocomplete="off">
-    </label>
-    <div class="row">
-      <label for="frLat">Latitude <input id="frLat" type="number" inputmode="decimal" step="any" min="-90" max="90"></label>
-      <label for="frLon">Longitude <input id="frLon" type="number" inputmode="decimal" step="any" min="-180" max="180"></label>
-    </div>
     <label for="wordsIn">A few words (optional)
       <input id="wordsIn" type="text" maxlength="140" autocomplete="off">
     </label>
-    <label for="linkOut">Link for them
+    <label for="linkOut">Your link
       <input id="linkOut" type="text" readonly>
     </label>
-    <p>Whoever has this link can see both places, rounded to about a kilometre. The places are fixed when you share and do not follow you.</p>
+    <p>Anyone who opens this link sees where you are, rounded to about a kilometre, from wherever they stand. The place is fixed when you share and does not follow you.</p>
     <p class="msg" id="cardMsg"></p>
     <div class="row">
       <button class="btn" type="button" id="sheetClose">Done</button>
@@ -139,25 +129,19 @@ const glc=document.getElementById('gl'), cv=document.getElementById('over'), ctx
 const $=id=>document.getElementById(id);
 const FONT='"DM Sans", system-ui, sans-serif', PIN='#ffb24a';
 
-/* ---------- the two people ---------- */
-let P={a:{name:'Friso',lat:35.68,lon:139.77},b:{name:'Robert-Hein',lat:52.085,lon:4.883}};
-let self='a', words='', fromLink=false;
-const other=k=>k==='a'?'b':'a';
+/* ---------- you, and the person whose link you opened ---------- */
 function okLL(v){return v.length===2&&v[0]>=-90&&v[0]<=90&&v[1]>=-180&&v[1]<=180;}
+let pin=null, words='';
 try{
-  const q=new URLSearchParams(location.hash.slice(1));
-  if(q.get('al')&&q.get('bl')){
-    const al=q.get('al').split(',').map(Number), bl=q.get('bl').split(',').map(Number);
-    if(okLL(al)&&okLL(bl)){
-      P={a:{name:(q.get('an')||'A friend').slice(0,40),lat:al[0],lon:al[1]},b:{name:(q.get('bn')||'You').slice(0,40),lat:bl[0],lon:bl[1]}};
-      self=q.get('v')==='b'?'b':'a';words=(q.get('msg')||'').slice(0,140);fromLink=true;
-    }
-  }
+  const q=new URLSearchParams(location.hash.slice(1)), at=(q.get('at')||q.get('al')||'').split(',').map(Number);
+  if((q.get('at')||q.get('al'))&&okLL(at)){pin={name:(q.get('n')||q.get('an')||'A friend').slice(0,40),lat:at[0],lon:at[1]};words=(q.get('msg')||'').slice(0,140);}
 }catch(e){}
-if(!fromLink){try{const s=JSON.parse(localStorage.getItem('ttr.card'));
-  if(s&&s.a&&s.b&&okLL([s.a.lat,s.a.lon])&&okLL([s.b.lat,s.b.lon])){P=s;words=s.words||'';delete P.words;}}catch(e){}}
-function save(){if(fromLink)return;try{localStorage.setItem('ttr.card',JSON.stringify({a:P.a,b:P.b,words}));}catch(e){}}
-let view=self;
+// until your phone says where you are: the owner starts in Tokyo, a visitor in Utrecht
+let me=pin?{name:'',lat:52.09,lon:5.12}:{name:'Friso',lat:35.68,lon:139.77};
+let located=false;
+try{const s=JSON.parse(localStorage.getItem('ttl.me'));
+  if(s&&okLL([s.lat,s.lon])){me={name:typeof s.name==='string'?s.name:me.name,lat:s.lat,lon:s.lon};located=true;}}catch(e){}
+function save(){try{localStorage.setItem('ttl.me',JSON.stringify(me));}catch(e){}}
 
 /* ---------- map data ---------- */
 function decode(a){const n=a.length/2,o=new Float32Array(n*2);let x=0,y=0;for(let i=0;i<n;i++){x+=a[2*i];y+=a[2*i+1];o[2*i]=x/100;o[2*i+1]=y/100;}return o;}
@@ -192,15 +176,14 @@ function toENU(lon,lat,out,k){const f=lat*D2R,l=lon*D2R,cf=Math.cos(f);
   out[k]=dx*E[0]+dy*E[1];out[k+1]=dx*N[0]+dy*N[1]+dz*N[2];out[k+2]=dx*U[0]+dy*U[1]+dz*U[2];}
 const LABEL_COUNT=80;
 function setHere(){
-  const me=P[view], f=me.lat*D2R, l=me.lon*D2R;
+  const f=me.lat*D2R, l=me.lon*D2R;
   U=[Math.cos(f)*Math.cos(l),Math.cos(f)*Math.sin(l),Math.sin(f)];
   E=[-Math.sin(l),Math.cos(l),0];
   N=[-Math.sin(f)*Math.cos(l),-Math.sin(f)*Math.sin(l),Math.cos(f)];
   lines=BORDERS.map(ll=>{const n=ll.length/2,p=new Float32Array(n*3);for(let i=0;i<n;i++)toENU(ll[2*i],ll[2*i+1],p,3*i);return {p,n};});
   labels=DATA.labels.slice(0,LABEL_COUNT).map(([name,lon,lat])=>{const p=[0,0,0];toENU(lon,lat,p,0);return {name,p};});
-  const o=P[other(view)], p=[0,0,0];toENU(o.lon,o.lat,p,0);
-  const d=Math.hypot(p[0],p[1],p[2]);
-  friend=d>2e-4?{p,d,u:[p[0]/d,p[1]/d,p[2]/d]}:null;
+  friend=null;
+  if(pin){const p=[0,0,0];toENU(pin.lon,pin.lat,p,0);const d=Math.hypot(p[0],p[1],p[2]);if(d>2e-4)friend={p,d,u:[p[0]/d,p[1]/d,p[2]/d]};}
   if(mode==='drag'&&!userMoved) aim();
   dirty=true;lastRead=0;
 }
@@ -368,7 +351,7 @@ function draw(){
       ctx.fillStyle='rgba(255,178,74,.22)';ctx.beginPath();ctx.arc(s[0],s[1],19,0,7);ctx.fill();
       ctx.fillStyle=PIN;ctx.beginPath();ctx.arc(s[0],s[1],6,0,7);ctx.fill();
       ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(s[0],s[1],6,0,7);ctx.stroke();
-      const txt=P[other(view)].name+' is here';
+      const txt=pin.name+' is here';
       ctx.font='600 13px '+FONT;const tw=ctx.measureText(txt).width+20;
       const lx=Math.max(tw/2+8,Math.min(W-tw/2-8,s[0])), ly=s[1]-36;
       ctx.fillStyle='rgba(12,16,26,.85)';ctx.beginPath();
@@ -391,28 +374,37 @@ function fmtKm(km){return Math.round(km<100?km:Math.round(km/10)*10).toLocaleStr
 const WINDS=['north','north-east','east','south-east','south','south-west','west','north-west'];
 let lastRead=0, tiltNote='';
 function set(id,t){const e=$(id);if(e.textContent!==t){e.textContent=t;return true;}return false;}
+function crosshairPlace(){
+  const vz=fwd[2]; if(vz>=-0.004) return null;
+  const t=-2*vz, q=[fwd[0]*t,fwd[1]*t,fwd[2]*t];
+  const x=U[0]+q[0]*E[0]+q[1]*N[0]+q[2]*U[0], y=U[1]+q[0]*E[1]+q[1]*N[1]+q[2]*U[1], z=U[2]+q[1]*N[2]+q[2]*U[2];
+  const lat=Math.asin(Math.max(-1,Math.min(1,z)))/D2R, lon=Math.atan2(y,x)/D2R;
+  return {name:countryAt(lon,lat)||'Open ocean',km:t*R_KM,lat,lon};
+}
 function readout(now){
   if(now-lastRead<200) return; lastRead=now;
-  const me=P[view], o=P[other(view)];let ch=false;
-  ch=set('eyebrow',(view===self?'You are in ':me.name+' is in ')+placeOf(me)+(view===self?'':' · preview of what '+me.name+' sees'))||ch;
-  ch=set('title',o.name+' is here')||ch;
-  ch=set('words',fromLink&&view===self?words:'')||ch;
-  if(friend){
-    ch=set('sub',placeOf(o)+' · '+fmtKm(friend.d*R_KM)+' through the Earth · '+lightAt(o))||ch;
+  let ch=false;
+  ch=set('eyebrow',located?'You are in '+placeOf(me):'Seen from '+placeOf(me)+' until your phone shares its location')||ch;
+  ch=set('words',pin?words:'')||ch;
+  if(pin&&friend){
+    ch=set('title',pin.name+' is here')||ch;
+    ch=set('sub',placeOf(pin)+' · '+fmtKm(friend.d*R_KM)+' through the Earth · '+lightAt(pin))||ch;
     const dot=fwd[0]*friend.u[0]+fwd[1]*friend.u[1]+fwd[2]*friend.u[2];
     const hd=(Math.atan2(friend.u[0],friend.u[1])/D2R+360)%360, down=Math.round(-Math.asin(friend.u[2])/D2R);
-    ch=set('hint',tiltNote||(dot>Math.cos(5*D2R)?'You are looking right at '+o.name+'.':'To the '+WINDS[Math.round(hd/45)%8]+', '+down+'° below the horizon. Follow the arrow.'))||ch;
-  } else {ch=set('sub','right where you are')||ch;ch=set('hint',tiltNote)||ch;}
+    ch=set('hint',tiltNote||(dot>Math.cos(5*D2R)?'You are looking right at '+pin.name+'.':'To the '+WINDS[Math.round(hd/45)%8]+', '+down+'° below the horizon. Follow the arrow.'))||ch;
+  } else if(pin){
+    ch=set('title',pin.name+' is here')||ch;ch=set('sub','right where you are')||ch;ch=set('hint',tiltNote)||ch;
+  } else {
+    const spot=crosshairPlace();
+    ch=set('title',spot?spot.name:'Open sky')||ch;
+    ch=set('sub',spot?fmtKm(spot.km)+' through the Earth · '+lightAt(spot).replace(' there now',' there'):'Point your phone at the ground')||ch;
+    ch=set('hint',tiltNote||'Share your link and anyone who opens it can find you through the Earth.')||ch;
+  }
   if(ch) measurePlate();
 }
 function measurePlate(){plateH=document.querySelector('.plate').getBoundingClientRect().height;dirty=true;}
 function frame(now){const moved=stepCamera();if(dirty||moved){dirty=false;draw();readout(now);}requestAnimationFrame(frame);}
 
-/* ---------- view switch ---------- */
-function paintSeg(){$('viewA').textContent=P.a.name;$('viewB').textContent=P.b.name;$('viewA').classList.toggle('on',view==='a');$('viewB').classList.toggle('on',view==='b');}
-function setView(k){view=k;userMoved=false;paintSeg();setHere();}
-$('viewA').addEventListener('click',()=>setView('a'));
-$('viewB').addEventListener('click',()=>setView('b'));
 $('aimBtn').addEventListener('click',()=>{userMoved=false;aim();});
 
 /* ---------- touch ---------- */
@@ -442,7 +434,7 @@ function onOri(e){
   if(!gotAny){gotAny=true;setTimeout(()=>{if(mode==='sensor'&&!gotAbs)note('Your phone gives tilt but no compass, so north is a guess. Drag sideways to line it up.');},600);}
   sensorTarget(a,e.beta,e.gamma||0);
 }
-function sensorUi(){const on=mode==='sensor';$('aimBtn').hidden=on;$('tiltBtn').hidden=on;}
+function sensorUi(){const on=mode==='sensor';$('aimBtn').hidden=on||!pin;$('tiltBtn').hidden=on;}
 function stopSensors(){mode='drag';heading=(Math.atan2(fwd[0],fwd[1])/D2R+360)%360;pitch=Math.asin(fwd[2])/D2R;dragTarget();sensorUi();}
 async function startSensors(){
   if(typeof DeviceOrientationEvent==='undefined'){note('This browser has no tilt sensor. Drag to look around instead.');return;}
@@ -468,46 +460,41 @@ function locate(silent){
   if(!navigator.geolocation){if(!silent)m.textContent=blocked;return;}
   if(!silent)m.textContent='Finding you…';
   try{navigator.geolocation.getCurrentPosition(
-    p=>{gpsFixed=true;P[self].lat=p.coords.latitude;P[self].lon=p.coords.longitude;save();
-        $('meLat').value=P[self].lat.toFixed(4);$('meLon').value=P[self].lon.toFixed(4);m.textContent=silent?'':'Found you in '+placeOf(P[self])+'.';refreshLink();setHere();},
+    p=>{gpsFixed=true;located=true;me.lat=p.coords.latitude;me.lon=p.coords.longitude;save();
+        $('meLat').value=me.lat.toFixed(4);$('meLon').value=me.lon.toFixed(4);m.textContent=silent?'':'Found you in '+placeOf(me)+'.';refreshLink();setHere();},
     err=>{if(!silent)m.textContent=err&&err.code===3?'That took too long. Try again outdoors, or type coordinates.':blocked;},
     {enableHighAccuracy:false,timeout:15000,maximumAge:300000});}catch(e){if(!silent)m.textContent=blocked;}
 }
 $('gpsBtn').addEventListener('click',()=>locate(false));
 
-/* ---------- who is where, and sharing ---------- */
+/* ---------- sharing where you are ---------- */
 function cardLink(){
-  const me=P[self], o=P[other(self)], q=new URLSearchParams();
-  q.set('an',me.name);q.set('al',me.lat.toFixed(2)+','+me.lon.toFixed(2));
-  q.set('bn',o.name);q.set('bl',o.lat.toFixed(2)+','+o.lon.toFixed(2));
-  q.set('v','b');if(words)q.set('msg',words);
+  const q=new URLSearchParams();
+  q.set('n',me.name||'A friend');q.set('at',me.lat.toFixed(2)+','+me.lon.toFixed(2));
+  const w=$('wordsIn').value.trim();if(w)q.set('msg',w);
   return location.origin+location.pathname+'#'+q.toString();
 }
 function refreshLink(){$('linkOut').value=cardLink();}
 function readForm(){
-  const me=P[self], o=P[other(self)];
-  me.name=$('meName').value.trim()||'Me';o.name=$('frName').value.trim()||'Friend';words=$('wordsIn').value.trim();
-  const a=[parseFloat($('meLat').value),parseFloat($('meLon').value)], b=[parseFloat($('frLat').value),parseFloat($('frLon').value)];
-  let ok=true;
-  if(okLL(a)){me.lat=a[0];me.lon=a[1];}else ok=false;
-  if(okLL(b)){o.lat=b[0];o.lon=b[1];}else ok=false;
+  me.name=$('meName').value.trim();
+  const a=[parseFloat($('meLat').value),parseFloat($('meLon').value)], ok=okLL(a);
+  if(ok&&(Math.abs(a[0]-me.lat)>1e-4||Math.abs(a[1]-me.lon)>1e-4)){me.lat=a[0];me.lon=a[1];located=true;setHere();}
   $('cardMsg').textContent=ok?'':'Latitude runs from -90 to 90 and longitude from -180 to 180.';
-  save();paintSeg();refreshLink();setHere();return ok;
+  save();refreshLink();return ok;
 }
 $('shareOpen').addEventListener('click',()=>{
-  const me=P[self], o=P[other(self)];
   $('meName').value=me.name;$('meLat').value=me.lat.toFixed(4);$('meLon').value=me.lon.toFixed(4);
-  $('frName').value=o.name;$('frLat').value=o.lat.toFixed(4);$('frLon').value=o.lon.toFixed(4);
-  $('wordsIn').value=fromLink?'':words;if(fromLink)words='';
-  $('gpsMsg').textContent='';$('cardMsg').textContent='';refreshLink();$('sheet').hidden=false;
+  $('gpsMsg').textContent=located?'':'Your phone has not shared its location yet, so the link would show '+placeOf(me)+'.';
+  $('cardMsg').textContent='';refreshLink();$('sheet').hidden=false;
 });
-for(const id of ['meName','meLat','meLon','frName','frLat','frLon','wordsIn'])$(id).addEventListener('change',readForm);
+for(const id of ['meName','meLat','meLon','wordsIn'])$(id).addEventListener('input',()=>{if(id==='meName'||id==='wordsIn'){me.name=$('meName').value.trim();refreshLink();}});
+for(const id of ['meLat','meLon'])$(id).addEventListener('change',readForm);
 $('sheetClose').addEventListener('click',()=>{readForm();$('sheet').hidden=true;});
 $('sheet').addEventListener('click',e=>{if(e.target===$('sheet')){readForm();$('sheet').hidden=true;}});
 $('cardForm').addEventListener('submit',async e=>{e.preventDefault();
   if(!readForm())return;
-  const url=cardLink(), me=P[self];
-  if(navigator.share){try{await navigator.share({title:'Through the Earth',text:me.name+' is on the other side of the Earth. Point your phone at the ground to find them.',url});return;}catch(err){if(err&&err.name==='AbortError')return;}}
+  const url=cardLink(), who=me.name||'A friend';
+  if(navigator.share){try{await navigator.share({title:'Through the Earth',text:who+' is somewhere on the other side of the Earth. Point your phone at the ground to find them.',url});return;}catch(err){if(err&&err.name==='AbortError')return;}}
   try{await navigator.clipboard.writeText(url);$('cardMsg').textContent='Link copied. Paste it in a message.';}
   catch(err){$('linkOut').focus();$('linkOut').select();$('cardMsg').textContent='Copy the link above and paste it in a message.';}
 });
@@ -516,7 +503,7 @@ window.addEventListener('resize',()=>{resize();measurePlate();});
 if(screen.orientation&&screen.orientation.addEventListener)screen.orientation.addEventListener('change',()=>setTimeout(()=>{resize();measurePlate();},120));
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{measurePlate();});
 
-resize();paintSeg();setHere();fwd=tF.slice();right=tR.slice();measurePlate();
+resize();setHere();sensorUi();fwd=tF.slice();right=tR.slice();measurePlate();
 if(!hasGL)note('This browser cannot draw the photographic Earth, so only the borders show.');
 locate(true);
 autoTilt();
